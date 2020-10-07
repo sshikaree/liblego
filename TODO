@@ -1,0 +1,17 @@
+TODO
+****************
+	Dynamic allocated errors?
+
+parser.c:
+	- Implement parseRegex
+	+ Implement parseTypeSelector
+	+ Implement parseIDSelector
+	+ Implement parseClassSelector
+	- Implement parseAttributeSelector
+	- Implement parsePseudoClassSelector
+	- Implement parseInteger
+	- Implement parseNth
+	- Implement parseSimpleSelectorSequence
+	- Implement parseSelector
+	- Implement parseSelectorGroup
+	

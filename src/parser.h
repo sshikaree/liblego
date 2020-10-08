@@ -63,10 +63,6 @@ void Parser_init(Parser* p, char *source_string);
 ParserError appendSelector(Parser* p, SimpleSelector* sel);
 
 
-// toLowerASCII returns s with all ASCII capital letters lowercased.
-// It alteres source string. 
-//void Parser_toLowerASCII(char* s);
-
 // skipWhitespace consumes whitespace characters and comments.
 // It returns true if there was actually anything to skip.
 bool skipWhitespace(Parser* p);

@@ -203,9 +203,28 @@ void CompoundSelector_specificity(CompoundSelector* sel, Specificity spec) {
 // CombinedSelector
 // ****************
 
-CombinedSelector* CombinedSelector_new(void) {}
+CombinedSelector* CombinedSelector_new(void) {
+	CombinedSelector* comb_sel = malloc(sizeof (CombinedSelector));
+	if (!comb_sel) {
+		return NULL;
+	}
+	comb_sel->first = NULL;
+	comb_sel->second = NULL;
+	return comb_sel;
+}
 
-void CombinedSelector_free(CombinedSelector* comb_sel) {}
+void CombinedSelector_free(CombinedSelector* comb_sel) {
+	if (!comb_sel) {
+		return;
+	}
+	if (comb_sel->first) {
+		SimpleSelector_free(comb_sel->first);
+	}
+	if (comb_sel->second) {
+		SimpleSelector_free(comb_sel->second);
+	}
+	free(comb_sel);
+}
 
 void CombinedSelector_specificity(CombinedSelector* comb_sel, Specificity spec){
 	SimpleSelector_specificity(comb_sel->first, spec);

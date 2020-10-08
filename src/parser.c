@@ -289,8 +289,6 @@ ParserError parseQuoted(Parser* p, String* result) {
                 string_append_c(result, *c_ptr);
                 ++c_ptr;
             }
-
-
         }
     }
 
@@ -490,7 +488,6 @@ static ParserError parseSimpleSelectorSequence(Parser *p, CompoundSelector* csel
     }
 
 loop_exit:
-
 
     return 0;
 }

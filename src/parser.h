@@ -89,7 +89,7 @@ ParserError parseQuoted(Parser* p, String* result);
 ParserError parseSelector(Parser* p, CombinedSelector* comb_sel);
 
 // parseSelectorGroup parses a group of selectors, separated by commas.
-void parseSelectorGroup(Parser* p);
+ParserError parseSelectorGroup(Parser *p, CombinedSelector sel_group[], size_t group_size);
 
 
 

@@ -7,11 +7,11 @@ parser.c:
 	+ Implement parseTypeSelector
 	+ Implement parseIDSelector
 	+ Implement parseClassSelector
-	- Implement parseAttributeSelector
+	+ Implement parseAttributeSelector
 	- Implement parsePseudoClassSelector
 	- Implement parseInteger
 	- Implement parseNth
-	- Implement parseSimpleSelectorSequence
+	+ Implement parseSimpleSelectorSequence
 	- Implement parseSelector
-	- Implement parseSelectorGroup
+	+ Implement parseSelectorGroup
 	

@@ -493,19 +493,51 @@ loop_exit:
 }
 
 
+// Should rename to parseCombinedSelector ??
 // parseSelector parses a selector that may include combinators.
 ParserError parseSelector(Parser* p, CombinedSelector* comb_sel) {
     skipWhitespace(p);
-	CompoundSelector* csel = CompoundSelector_new();
-	ParserError err = parseSimpleSelectorSequence(p, csel);
+	CompoundSelector* first_sel = CompoundSelector_new();
+	ParserError err = parseSimpleSelectorSequence(p, first_sel);
 	if (err != ParserError_NO_ERROR) {
-		CompoundSelector_free(csel);
+		CompoundSelector_free(first_sel);
 		return err;
+	}
+	comb_sel->first = first_sel;
+	char combinator = 0;
+	for (;;) {
+		if (skipWhitespace(p)) {
+			combinator = ' ';
+		}
+		if (p->pos >= p->s + p->s_len) {
+			return ParserError_NO_ERROR;
+		}
+		switch (*p->pos) {
+		case '+': case '>': case '~':
+			combinator = *p->pos;
+			p->pos++;
+			skipWhitespace(p);
+			break;
+		case ',': case ')':
+			// These characters can't begin a selector, but they can legally occur after one.
+			return ParserError_NO_ERROR;
+		}
+		if (combinator == 0) {
+			return ParserError_NO_ERROR;
+		}
+		CompoundSelector* second_sel = CompoundSelector_new();
+		ParserError err = parseSimpleSelectorSequence(p, second_sel);
+		if (err != ParserError_NO_ERROR) {
+			CompoundSelector_free(first_sel);
+			CompoundSelector_free(second_sel);
+			return err;
+		}
+		comb_sel->second = second_sel;
 	}
 }
 
 // parseSelectorGroup parses a group of selectors, separated by commas.
-void parseSelectorGroup(Parser *p){
+ParserError parseSelectorGroup(Parser *p, CombinedSelector sel_group[], size_t group_size){
     skipWhitespace(p);
     int i = 0;
     for (char* c_ptr = p->pos; *c_ptr; ++c_ptr, ++(p->pos)) {

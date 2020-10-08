@@ -33,6 +33,7 @@ typedef enum {
 typedef enum {
     SelectorType_SIMPLE_SELECTOR,
     SelectorType_COMPOUND_SELECTOR,
+	SelectorType_COMBINED_SELECTOR,
     SelectorType_COMPLEX_SELECTOR,
 
     SelectorType_NUM
@@ -102,9 +103,9 @@ void				CompoundSelector_specificity(CompoundSelector* sel, Specificity spec);
 // CombinedSelector
 // ****************
 typedef struct CombinedSelector {
-	SimpleSelector*	first;
-	SimpleSelector*	second;
-	byte			combinator;
+	CompoundSelector*	first;
+	CompoundSelector*	second;
+	char			combinator;
 } CombinedSelector;
 
 CombinedSelector*	CombinedSelector_new(void);
@@ -119,9 +120,10 @@ void				CombinedSelector_specificity(CombinedSelector* comb_sel, Specificity spe
 typedef struct Selector {
     SelectorType  type;
     union {
-		SimpleSelector      smpl_sel;
-//        AttrSelector        asel;
-		CompoundSelector    comp_sel;
+		SimpleSelector		smpl_sel;
+//        AttrSelector*        asel;
+		CompoundSelector	comp_sel;
+		CombinedSelector	comb_sel;
     };
 } Selector;
 

@@ -218,19 +218,19 @@ void CombinedSelector_free(CombinedSelector* comb_sel) {
 		return;
 	}
 	if (comb_sel->first) {
-		SimpleSelector_free(comb_sel->first);
+		CompoundSelector_free(comb_sel->first);
 	}
 	if (comb_sel->second) {
-		SimpleSelector_free(comb_sel->second);
+		CompoundSelector_free(comb_sel->second);
 	}
 	free(comb_sel);
 }
 
 void CombinedSelector_specificity(CombinedSelector* comb_sel, Specificity spec){
-	SimpleSelector_specificity(comb_sel->first, spec);
+	CompoundSelector_specificity(comb_sel->first, spec);
 	if (comb_sel->second != NULL) {
 		Specificity tmp = {0};
-		SimpleSelector_specificity(comb_sel->second, tmp);
+		CompoundSelector_specificity(comb_sel->second, tmp);
 		Specificity_add(spec, tmp);
 	}
 }

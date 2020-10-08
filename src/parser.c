@@ -440,7 +440,7 @@ static ParserError parseSimpleSelectorSequence(Parser *p, CompoundSelector* csel
 		SimpleSelector* sel = SimpleSelector_new(SimpleSelectorType_TAG);
 		err = parseTypeSelector(p, sel);
 		if (err != ParserError_NO_ERROR) {
-			free(sel);
+			SimpleSelector_free(sel);
 			return err;
 		}
 		CompoundSelector_addSelector(csel, sel);
@@ -453,7 +453,7 @@ static ParserError parseSimpleSelectorSequence(Parser *p, CompoundSelector* csel
 			SimpleSelector* sel = SimpleSelector_new(SimpleSelectorType_ID);
 			err = parseIDSelector(p, sel);
 			if (err != ParserError_NO_ERROR) {
-				free(sel);
+				SimpleSelector_free(sel);
 				return err;
 			}
 			CompoundSelector_addSelector(csel, sel);
@@ -463,7 +463,7 @@ static ParserError parseSimpleSelectorSequence(Parser *p, CompoundSelector* csel
 			SimpleSelector* sel = SimpleSelector_new(SimpleSelectorType_CLASS);
 			err = parseClassSelector(p, sel);
 			if (err != ParserError_NO_ERROR) {
-				free(sel);
+				SimpleSelector_free(sel);
 				return err;
 			}
 			CompoundSelector_addSelector(csel, sel);
@@ -473,7 +473,7 @@ static ParserError parseSimpleSelectorSequence(Parser *p, CompoundSelector* csel
 			SimpleSelector* sel = SimpleSelector_new(SimpleSelectorType_ATTR);
 			err = parseAttributeSelector(p, sel);
 			if (err != ParserError_NO_ERROR) {
-				free(sel);
+				SimpleSelector_free(sel);
 				return err;
 			}
 			CompoundSelector_addSelector(csel, sel);
@@ -497,8 +497,14 @@ loop_exit:
 
 
 // parseSelector parses a selector that may include combinators.
-void parseSelector(Parser* p) {
+ParserError parseSelector(Parser* p, CombinedSelector* comb_sel) {
     skipWhitespace(p);
+	CompoundSelector* csel = CompoundSelector_new();
+	ParserError err = parseSimpleSelectorSequence(p, csel);
+	if (err != ParserError_NO_ERROR) {
+		CompoundSelector_free(csel);
+		return err;
+	}
 }
 
 // parseSelectorGroup parses a group of selectors, separated by commas.

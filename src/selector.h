@@ -15,7 +15,8 @@
 typedef int Specificity[SPEC_LEN];
 
 bool Specifity_less(Specificity first, Specificity second);
-int* Specifity_add(Specificity dst, Specificity src);
+int* Specificity_add(Specificity dst, Specificity src);
+
 
 typedef enum {
     SimpleSelectorType_UNIVERSAL, // '*'
@@ -37,9 +38,6 @@ typedef enum {
     SelectorType_NUM
 } SelectorType;
 
-/*****************************************/
-
-
 //typedef struct AttrSelector {
 //	String* key;
 //	String* val;
@@ -47,6 +45,10 @@ typedef enum {
 //	String* regexp;
 //} AttrSelector;
 
+
+// **************
+// SimpleSelector
+// **************
 typedef struct SimpleSelector {
     SimpleSelectorType  type;
 	String* val;
@@ -79,6 +81,10 @@ void			SimpleSelector_specificity(SimpleSelector* sel, Specificity spec);
 //extern const int IDSelectorSpecifity[SPEC_LEN];
 //extern const char* IDSelectorPseudoElement;
 
+
+// ****************
+// CompoundSelector
+// ****************
 // Maybe ComplexSelector??
 typedef struct CompoundSelector {
 	String*         pseudo_element;
@@ -92,13 +98,30 @@ void				CompoundSelector_addSelector(CompoundSelector* csel, SimpleSelector* sse
 void				CompoundSelector_specificity(CompoundSelector* sel, Specificity spec);
 
 
+// ****************
+// CombinedSelector
+// ****************
+typedef struct CombinedSelector {
+	SimpleSelector*	first;
+	SimpleSelector*	second;
+	byte			combinator;
+} CombinedSelector;
 
+CombinedSelector*	CombinedSelector_new(void);
+void				CombinedSelector_free(CombinedSelector* comb_sel);
+bool				CombinedSelector_match(CombinedSelector* comb_sel, TidyNode* tnod);
+void				CombinedSelector_specificity(CombinedSelector* comb_sel, Specificity spec);
+
+
+// ********
+// Selector
+// ********
 typedef struct Selector {
     SelectorType  type;
     union {
-		SimpleSelector      ssel;
+		SimpleSelector      smpl_sel;
 //        AttrSelector        asel;
-		CompoundSelector    csel;
+		CompoundSelector    comp_sel;
     };
 } Selector;
 

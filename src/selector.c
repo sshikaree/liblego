@@ -15,7 +15,7 @@ bool Specifity_less(Specificity first, Specificity second) {
 }
 
 // Appends @src to @dst. Returns &dst.
-int* Specifity_add(Specificity dst, Specificity src) {
+int* Specificity_add(Specificity dst, Specificity src) {
     for (int i = 0; i < SPEC_LEN; ++i) {
         dst[i] += src[i];
     }
@@ -32,6 +32,11 @@ int* Specifity_add(Specificity dst, Specificity src) {
 //const int IDSelectorSpecifity[SPEC_LEN] = {1, 0, 0};
 //const char* IDSelectorPseudoElement = "";
 
+
+
+// **************
+// SimpleSelector
+// **************
 
 // Creates new SimpleSelector
 SimpleSelector* SimpleSelector_new(SimpleSelectorType type) {
@@ -132,6 +137,9 @@ void SimpleSelector_specificity(SimpleSelector *sel, Specificity spec) {
 	}
 }
 
+// ****************
+// CompoundSelector
+// ****************
 
 CompoundSelector* CompoundSelector_new(void) {
 	CompoundSelector* sel = malloc(sizeof (CompoundSelector));
@@ -182,10 +190,28 @@ void CompoundSelector_specificity(CompoundSelector* sel, Specificity spec) {
 	Specificity tmp = {0};
 	for (size_t i = 0; i < sel->sel_num; ++i) {
 		SimpleSelector_specificity(sel->selectors[i], tmp);
-		Specifity_add(spec, tmp);
+		Specificity_add(spec, tmp);
 	}
 	if (sel->pseudo_element->len > 0) {
 		// https://drafts.csswg.org/selectors-3/#specificity
-		Specifity_add(spec, (Specificity){0, 0, 1});
+		Specificity_add(spec, (Specificity){0, 0, 1});
+	}
+}
+
+
+// ****************
+// CombinedSelector
+// ****************
+
+CombinedSelector* CombinedSelector_new(void) {}
+
+void CombinedSelector_free(CombinedSelector* comb_sel) {}
+
+void CombinedSelector_specificity(CombinedSelector* comb_sel, Specificity spec){
+	SimpleSelector_specificity(comb_sel->first, spec);
+	if (comb_sel->second != NULL) {
+		Specificity tmp = {0};
+		SimpleSelector_specificity(comb_sel->second, tmp);
+		Specificity_add(spec, tmp);
 	}
 }

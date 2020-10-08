@@ -90,7 +90,7 @@ ParserError parseQuoted(Parser* p, String* result);
 //int Parser_parseSimpleSelectorSequence(Parser* p);
 
 // parseSelector parses a selector that may include combinators.
-void parseSelector(Parser* p);
+ParserError parseSelector(Parser* p, CombinedSelector* comb_sel);
 
 // parseSelectorGroup parses a group of selectors, separated by commas.
 void parseSelectorGroup(Parser* p);

@@ -4,6 +4,7 @@
 #include <stdbool.h>
 
 #include "../../dynamic_string/dynamic_string.h"
+#include <tidy/tidy.h>
 
 #define SPEC_LEN 3 // Specifity array length
 #define MAX_SELECTORS_NUM 32 // Max SimpleSelectors array size in CompoundSelector
@@ -14,8 +15,7 @@
 typedef int Specificity[SPEC_LEN];
 
 bool Specifity_less(Specificity first, Specificity second);
-
-void Specifity_add(Specificity dst, Specificity src);
+int* Specifity_add(Specificity dst, Specificity src);
 
 typedef enum {
     SimpleSelectorType_UNIVERSAL, // '*'
@@ -40,12 +40,12 @@ typedef enum {
 /*****************************************/
 
 
-typedef struct AttrSelector {
-	String* key;
-	String* val;
-	String* operation;
-	String* regexp;
-} AttrSelector;
+//typedef struct AttrSelector {
+//	String* key;
+//	String* val;
+//	String* operation;
+//	String* regexp;
+//} AttrSelector;
 
 typedef struct SimpleSelector {
     SimpleSelectorType  type;
@@ -62,10 +62,10 @@ typedef struct SimpleSelector {
 } SimpleSelector;
 
 SimpleSelector* SimpleSelector_new(SimpleSelectorType type);
-void SimpleSelector_free(SimpleSelector* sel);
+void			SimpleSelector_free(SimpleSelector* sel);
 
-void SimpleSelector_specificity(SimpleSelector* sel, Specificity spec);
-String* SimpleSelector_string(SimpleSelector* sel);
+//String*			SimpleSelector_string(SimpleSelector* sel);
+void			SimpleSelector_specificity(SimpleSelector* sel, Specificity spec);
 
 //typedef String TagSelector;
 //extern const int TagSelectorSpecifity[SPEC_LEN];
@@ -81,23 +81,32 @@ String* SimpleSelector_string(SimpleSelector* sel);
 
 // Maybe ComplexSelector??
 typedef struct CompoundSelector {
-    size_t          len;
 	String*         pseudo_element;
-    SimpleSelector  selectors[MAX_SELECTORS_NUM];
+	SimpleSelector* selectors[MAX_SELECTORS_NUM];
+	size_t			sel_num; // Current selectors number
 } CompoundSelector;
+
+CompoundSelector*	CompoundSelector_new(void);
+void				CompoundSelector_free(CompoundSelector* sel);
+void				CompoundSelector_addSelector(CompoundSelector* csel, SimpleSelector* ssel);
+void				CompoundSelector_specificity(CompoundSelector* sel, Specificity spec);
+
+
 
 typedef struct Selector {
     SelectorType  type;
     union {
-        SimpleSelector      ss;
-        AttrSelector        as;
-        CompoundSelector    cs;
+		SimpleSelector      ssel;
+//        AttrSelector        asel;
+		CompoundSelector    csel;
     };
 } Selector;
 
+Selector*	Selector_new(SelectorType sel_type, SimpleSelectorType smpl_sel_type);
+void		Selector_free(Selector* sel);
 
-bool Selector_match(Selector* sel);
-int Selector_string(Selector* sel, String* s);
-void Selector_specificity(SimpleSelector* sel, Specificity spec);
+bool		Selector_match(Selector* sel, TidyNode* tnod);
+//int			Selector_string(Selector* sel, String* s);
+void		Selector_specificity(Selector* sel, Specificity spec);
 
 #endif // SELECTOR_H

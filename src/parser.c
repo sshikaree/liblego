@@ -344,7 +344,7 @@ static ParserError parseClassSelector(Parser *p, SimpleSelector* class_selector)
 
 
 // parseAttributeSelector parses a selector that matches by attribute value.
-static ParserError parseAttributeSelector(Parser *p, AttrSelector* attr_selector) {
+static ParserError parseAttributeSelector(Parser *p, SimpleSelector* attr_selector) {
     if (p->pos > p->s + p->s_len) {
         return ParserError_UNEXPECTED_EOF;
     }
@@ -353,6 +353,7 @@ static ParserError parseAttributeSelector(Parser *p, AttrSelector* attr_selector
     }
     p->pos++;
     skipWhitespace(p);
+	attr_selector->type = SimpleSelectorType_ATTR;
 	ParserError err = parseIdentifier(p, attr_selector->key);
     if (err != ParserError_NO_ERROR) {
         return err;
@@ -422,10 +423,11 @@ static ParserError parseAttributeSelector(Parser *p, AttrSelector* attr_selector
 
 // parseSimpleSelectorSequence parses a selector sequence that applies to
 // a single element.
-static ParserError parseSimpleSelectorSequence(Parser *p, CompoundSelector* cs) {
+static ParserError parseSimpleSelectorSequence(Parser *p, CompoundSelector* csel) {
     if (p->pos > p->s + p->s_len) {
         return ParserError_UNEXPECTED_EOF;
     }
+	ParserError err = ParserError_NO_ERROR;
     switch (*p->pos) {
     case '*':
         // It's the universal selector. Just skip over it, since it doesn't affect the meaning.
@@ -434,20 +436,49 @@ static ParserError parseSimpleSelectorSequence(Parser *p, CompoundSelector* cs) 
     case '#': case '.': case '[': case ':':
         // There's no type selector. Wait to process the other till the main loop.
         break;
-    default:
-        parseTypeSelector(p, NULL, 0);
+	default:{
+		SimpleSelector* sel = SimpleSelector_new(SimpleSelectorType_TAG);
+		err = parseTypeSelector(p, sel);
+		if (err != ParserError_NO_ERROR) {
+			free(sel);
+			return err;
+		}
+		CompoundSelector_addSelector(csel, sel);
+		break;
+		}
     }
     for (;*p->pos;) {
         switch (*p->pos) {
-        case '#':
-            parseIDSelector(p);
+		case '#':{
+			SimpleSelector* sel = SimpleSelector_new(SimpleSelectorType_ID);
+			err = parseIDSelector(p, sel);
+			if (err != ParserError_NO_ERROR) {
+				free(sel);
+				return err;
+			}
+			CompoundSelector_addSelector(csel, sel);
             break;
-        case '.':
-            parseClassSelector(p);
-            break;
-        case '[':
-            parseAttributeSelector(p);
-            break;
+			}
+		case '.':{
+			SimpleSelector* sel = SimpleSelector_new(SimpleSelectorType_CLASS);
+			err = parseClassSelector(p, sel);
+			if (err != ParserError_NO_ERROR) {
+				free(sel);
+				return err;
+			}
+			CompoundSelector_addSelector(csel, sel);
+			break;
+			}
+		case '[':{
+			SimpleSelector* sel = SimpleSelector_new(SimpleSelectorType_ATTR);
+			err = parseAttributeSelector(p, sel);
+			if (err != ParserError_NO_ERROR) {
+				free(sel);
+				return err;
+			}
+			CompoundSelector_addSelector(csel, sel);
+			break;
+			}
         case ':':
             //TODO: call Parser_parsePseudoClassSelector() here
             break;

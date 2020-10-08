@@ -14,11 +14,12 @@ bool Specifity_less(Specificity first, Specificity second) {
     return false;
 }
 
-// Appends @src to @dst
-void Specifity_add(Specificity dst, Specificity src) {
+// Appends @src to @dst. Returns &dst.
+int* Specifity_add(Specificity dst, Specificity src) {
     for (int i = 0; i < SPEC_LEN; ++i) {
         dst[i] += src[i];
     }
+	return dst;
 }
 
 
@@ -31,8 +32,10 @@ void Specifity_add(Specificity dst, Specificity src) {
 //const int IDSelectorSpecifity[SPEC_LEN] = {1, 0, 0};
 //const char* IDSelectorPseudoElement = "";
 
-SimpleSelector *SimpleSelector_new(SimpleSelectorType type) {
-    SimpleSelector* sel = malloc(sizeof (sel));
+
+// Creates new SimpleSelector
+SimpleSelector* SimpleSelector_new(SimpleSelectorType type) {
+	SimpleSelector* sel = malloc(sizeof (SimpleSelector));
     if (!sel) {
         return NULL;
     }
@@ -71,8 +74,36 @@ SimpleSelector *SimpleSelector_new(SimpleSelectorType type) {
     return sel;
 }
 
+void SimpleSelector_free(SimpleSelector* sel) {
+	if (!sel) {
+		return;
+	}
+	if (sel->val) {
+		free(sel->val);
+	}
+	if (sel->pseudo_element) {
+		free(sel->pseudo_element);
+	}
+
+	if (sel->type == SimpleSelectorType_ATTR) {
+		if (sel->key) {
+			free(sel->key);
+		}
+		if (sel->operation) {
+			free(sel->operation);
+		}
+
+		if (sel->regexp) {
+			free(sel->regexp);
+		}
+	}
+
+	free(sel);
+}
+
+
 // Returns specificity of @sel.
-void Selector_specificity(SimpleSelector *sel, Specificity spec) {
+void SimpleSelector_specificity(SimpleSelector *sel, Specificity spec) {
 	switch (sel->type) {
 	case SimpleSelectorType_ID:
 		spec[0] = 1;
@@ -95,6 +126,66 @@ void Selector_specificity(SimpleSelector *sel, Specificity spec) {
 		spec[2] = 0;
 		break;
 	case SimpleSelectorType_PSEUDO:
+		//
+		// TODO!!
 		break;
+	}
+}
+
+
+CompoundSelector* CompoundSelector_new(void) {
+	CompoundSelector* sel = malloc(sizeof (CompoundSelector));
+	if (!sel) {
+		return NULL;
+	}
+	sel->sel_num = 0;
+	sel->pseudo_element = string_new(NULL);
+	if (!sel->pseudo_element) {
+		free(sel);
+		return NULL;
+	}
+
+	// Should we memset csel->selectors with '0' here?
+	return sel;
+}
+
+void CompoundSelector_free(CompoundSelector* sel) {
+	if (!sel) {
+		return;
+	}
+	if (sel->pseudo_element) {
+		free(sel->pseudo_element);
+	}
+	for (size_t i = 0; i < sel->sel_num; ++i) {
+		SimpleSelector_free(sel->selectors[i]);
+	}
+	free(sel);
+}
+
+// TODO:
+// - Return an error if array overflows
+void CompoundSelector_addSelector(CompoundSelector* csel, SimpleSelector* ssel) {
+	if (!csel || !ssel) {
+		return;
+	}
+	if (csel->sel_num >= MAX_SELECTORS_NUM) {
+		fprintf(stderr, "Compound selector buffer overflow\n");
+		return;
+	}
+	csel->selectors[csel->sel_num] = ssel;
+	++csel->sel_num;
+}
+
+
+void CompoundSelector_specificity(CompoundSelector* sel, Specificity spec) {
+	memset(spec, 0, SPEC_LEN);
+	Specificity tmp = {0};
+	for (size_t i = 0; i < sel->sel_num; ++i) {
+		SimpleSelector_specificity(sel->selectors[i], tmp);
+		Specifity_add(spec, tmp);
+	}
+	if (sel->pseudo_element->len > 0) {
+		// https://drafts.csswg.org/selectors-3/#specificity
+		Specifity_add(spec, (Specificity){0, 0, 1});
 	}
 }

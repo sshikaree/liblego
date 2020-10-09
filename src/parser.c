@@ -537,17 +537,39 @@ ParserError parseSelector(Parser* p, CombinedSelector* comb_sel) {
 }
 
 // parseSelectorGroup parses a group of selectors, separated by commas.
-ParserError parseSelectorGroup(Parser *p, CombinedSelector sel_group[], size_t group_size){
-    skipWhitespace(p);
-    int i = 0;
-    for (char* c_ptr = p->pos; *c_ptr; ++c_ptr, ++(p->pos)) {
-        if (*c_ptr == ',') {
-            if (p->pos - p->s == 0) {
-                continue;
-            }
+ParserError parseSelectorGroup(Parser *p, CombinedSelector* sel_group[], int group_size){
+	int i = 0;
+	memset(sel_group, 0, (size_t)group_size);
+	CombinedSelector* comb_sel = CombinedSelector_new();
+	ParserError err = parseSelector(p, comb_sel);
+	if (err != ParserError_NO_ERROR) {
+		CombinedSelector_free(comb_sel);
+		return err;
+	}
+	sel_group[i] = comb_sel;
+	i++;
+	if (i >= group_size) {
+		return ParserError_SEL_BUF_OVERFLOW;
+	}
 
+	for (; *p->pos; ) {
+		if (*p->pos != ',') {
+			break;
         }
+		p->pos++;
+		comb_sel = CombinedSelector_new();
+		err = parseSelector(p, comb_sel);
+		if (err != ParserError_NO_ERROR) {
+			CombinedSelector_free(comb_sel);
+			return err;
+		}
+		sel_group[i] = comb_sel;
+		i++;
+		if (i >= group_size) {
+			return ParserError_SEL_BUF_OVERFLOW;
+		}
     }
+	return ParserError_NO_ERROR;
 }
 
 

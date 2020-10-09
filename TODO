@@ -1,8 +1,9 @@
-TODO
-****************
-	Dynamic allocated errors?
+********
+* TODO *
+********
 
 parser.c:
+--------
 	- Implement parseRegex
 	+ Implement parseTypeSelector
 	+ Implement parseIDSelector
@@ -14,4 +15,7 @@ parser.c:
 	+ Implement parseSimpleSelectorSequence
 	+ Implement parseSelector
 	+ Implement parseSelectorGroup
-	
+
+selector.c:
+----------
+	- Implement matching functions.	

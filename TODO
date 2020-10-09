@@ -12,6 +12,6 @@ parser.c:
 	- Implement parseInteger
 	- Implement parseNth
 	+ Implement parseSimpleSelectorSequence
-	- Implement parseSelector
+	+ Implement parseSelector
 	+ Implement parseSelectorGroup
 	

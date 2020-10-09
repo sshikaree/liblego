@@ -66,9 +66,8 @@ typedef struct SimpleSelector {
 
 SimpleSelector* SimpleSelector_new(SimpleSelectorType type);
 void			SimpleSelector_free(SimpleSelector* sel);
-
-//String*			SimpleSelector_string(SimpleSelector* sel);
 void			SimpleSelector_specificity(SimpleSelector* sel, Specificity spec);
+bool			SimpleSelector_match(SimpleSelector* sel, TidyNode node);
 
 //typedef String TagSelector;
 //extern const int TagSelectorSpecifity[SPEC_LEN];
@@ -94,9 +93,10 @@ typedef struct CompoundSelector {
 } CompoundSelector;
 
 CompoundSelector*	CompoundSelector_new(void);
-void				CompoundSelector_free(CompoundSelector* sel);
-void				CompoundSelector_addSelector(CompoundSelector* csel, SimpleSelector* ssel);
-void				CompoundSelector_specificity(CompoundSelector* sel, Specificity spec);
+void				CompoundSelector_free(CompoundSelector* comp_sel);
+void				CompoundSelector_addSelector(CompoundSelector* comp_sel, SimpleSelector* smpl_sel);
+void				CompoundSelector_specificity(CompoundSelector* comp_sel, Specificity spec);
+bool				CompoundSelector_match(CompoundSelector* comp_sel, TidyNode* node);
 
 
 // ****************
@@ -110,8 +110,8 @@ typedef struct CombinedSelector {
 
 CombinedSelector*	CombinedSelector_new(void);
 void				CombinedSelector_free(CombinedSelector* comb_sel);
-bool				CombinedSelector_match(CombinedSelector* comb_sel, TidyNode* tnod);
 void				CombinedSelector_specificity(CombinedSelector* comb_sel, Specificity spec);
+bool				CombinedSelector_match(CombinedSelector* comb_sel, TidyNode* tnod);
 
 
 // ********
@@ -129,9 +129,9 @@ typedef struct Selector {
 
 Selector*	Selector_new(SelectorType sel_type, SimpleSelectorType smpl_sel_type);
 void		Selector_free(Selector* sel);
-
-bool		Selector_match(Selector* sel, TidyNode* tnod);
-//int			Selector_string(Selector* sel, String* s);
 void		Selector_specificity(Selector* sel, Specificity spec);
+bool		Selector_match(Selector* sel, TidyNode* tnod);
+
+
 
 #endif // SELECTOR_H

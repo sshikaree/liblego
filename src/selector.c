@@ -137,6 +137,32 @@ void SimpleSelector_specificity(SimpleSelector *sel, Specificity spec) {
 	}
 }
 
+bool SimpleSelector_match(SimpleSelector* sel, TidyNode node) {
+	TidyAttr tattr = NULL;
+	ctmbstr	 tattr_value = NULL;
+	switch (sel->type) {
+	case SimpleSelectorType_ID:
+		tattr = tidyAttrGetById(node, TidyAttr_ID);
+		if (tattr) {
+			tattr_value = tidyAttrValue(tattr);
+		}
+		return (tattr_value && (strcmp(tattr_value, sel->val->str) == 0));
+	case SimpleSelectorType_CLASS:
+		tattr = tidyAttrGetById(node, TidyAttr_CLASS);
+		if (tattr) {
+			tattr_value = tidyAttrValue(tattr);
+		}
+		return (tattr_value && (strcmp(tattr_value, sel->val->str) == 0));
+	case SimpleSelectorType_TAG:
+		tattr_value = tidyNodeGetName(node);
+		return (tattr_value && (strcmp(tattr_value, sel->val->str) == 0));
+	case SimpleSelectorType_ATTR:
+		break;
+	}
+
+	return false;
+}
+
 // ****************
 // CompoundSelector
 // ****************

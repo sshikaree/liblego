@@ -202,7 +202,6 @@ static ParserError parseEscape(Parser* p, char buf[5]) {
 static ParserError parseName(Parser* p, String* result) {
     for (; *p->pos; ) {
         if (nameChar((byte)*p->pos)) {
-//            printf("Appending '%c' to '%s'\n", *p->pos, result->str);
             string_append_c(result, *p->pos);
             p->pos++;
         } else if (*p->pos == '\\') {
@@ -213,7 +212,8 @@ static ParserError parseName(Parser* p, String* result) {
             }
             string_append(result, buf);
         } else {
-            p->pos++;
+//            p->pos++;
+			break;
         }
     }
     if (result->len < 1) {

@@ -84,22 +84,22 @@ void SimpleSelector_free(SimpleSelector* sel) {
 		return;
 	}
 	if (sel->val) {
-		free(sel->val);
+		string_free(sel->val);
 	}
 	if (sel->pseudo_element) {
-		free(sel->pseudo_element);
+		string_free(sel->pseudo_element);
 	}
 
 	if (sel->type == SimpleSelectorType_ATTR) {
 		if (sel->key) {
-			free(sel->key);
+			string_free(sel->key);
 		}
 		if (sel->operation) {
-			free(sel->operation);
+			string_free(sel->operation);
 		}
 
 		if (sel->regexp) {
-			free(sel->regexp);
+			string_free(sel->regexp);
 		}
 	}
 
@@ -188,7 +188,7 @@ void CompoundSelector_free(CompoundSelector* sel) {
 		return;
 	}
 	if (sel->pseudo_element) {
-		free(sel->pseudo_element);
+		string_free(sel->pseudo_element);
 	}
 	for (size_t i = 0; i < sel->sel_num; ++i) {
 		SimpleSelector_free(sel->selectors[i]);

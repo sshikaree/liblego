@@ -8,13 +8,11 @@ find_package(PkgConfig)
 pkg_check_modules(LibTidy REQUIRED tidy)
 include_directories(${LibTidy_INCLUDE_DIRS})
 link_directories(${LibTidy_LIBRARY_DIRS})
-add_definitions(${LibTdy_CFLAGS_OTHER})
+
 
 set(
 	PROJECT_SRC
-#    src/tests/parser_test.c
-#	src/tests/selector_test.c
-    src/selector.c
+	src/selector.c
     src/selector.h
     src/parser.c
     src/parser.h
@@ -31,13 +29,6 @@ set(
 set(
 	SELECTOR_TEST_SRC
 	src/tests/selector_test.c
-#	src/selector.c
-#	src/selector.h
-#	src/parser.c
-#	src/parser.h
-
-#	../dynamic_string/dynamic_string.h
-#	../dynamic_string/dynamic_string.c
 )
 
 

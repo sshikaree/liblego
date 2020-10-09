@@ -3,6 +3,8 @@
 //#include "tokens_array.h"
 #include "../parser.h"
 
+#define SAMPLES_NUM 7
+
 static char samples[][128] = {
     ".class1.class2 sub_class3",
     "  .class1 sub_class2",
@@ -32,9 +34,10 @@ int main() {
 
     // parseIdentifier Tests
     puts("parseIdentifier Tests\n");
-    for (int i = 0; i < 7; ++i) {
+	for (int i = 0; i < SAMPLES_NUM; ++i) {
         printf("Source string: '%s'\n", identifierTestSamples[0][i]);
         printf("Wanted: '%s'\n", identifierTestSamples[1][i]);
+
         Parser_init(&p, identifierTestSamples[0][i]);
         skipWhitespace(&p);
 

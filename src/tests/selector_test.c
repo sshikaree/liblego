@@ -4,17 +4,25 @@
 #include <tidy/tidy.h>
 #include <tidy/tidybuffio.h>
 
-#define SAMPLES_NUM	3
+#define SAMPLES_NUM	7
 
 static char html_samples[][128] = {
 	"<body><address>This address...</address></body>",
+	"<!-- comment --><html><head></head><body>text</body></html>",
+	"<html><head></head><body></body></html>",
 	"<p id=\"foo\"><p id=\"bar\">",
-	"<div class=\"test\">"
+	"<ul><li id=\"t1\"><p id=\"t1\">",
+	"<ol><li id=\"t4\"><li id=\"t44\">,"
+	"<div class=\"test\">",
 };
 
 static char selector_samples[][128] = {
 	"address",
+	"*",
+	"*",
 	"#foo",
+	"li#t1",
+	"*#t4",
 	"div.teST"
 };
 
@@ -23,9 +31,14 @@ static void tree_traversal(TidyDoc tdoc, TidyNode root, CombinedSelector** sel_g
 	for (TidyNode child = tidyGetChild(root); child; child = tidyGetNext(child)) {
 //		printf("Node name: %s\n", tidyNodeGetName(child));
 		for (CombinedSelector** sel_ptr = sel_group; *sel_ptr; ++sel_ptr) {
+//			String* s = CombinedSelector_string(*sel_ptr);
+//			printf("Selector: %s\n", s->str);
+//			string_free(s);
 			if (CombinedSelector_match(*sel_ptr, child)) {
 				TidyBuffer buf = {0};
 				tidyNodeGetText(tdoc, child, &buf);
+				// Get rid of trailing '\n'-s
+				for (; buf.size-1 > 0 && buf.bp[buf.size-1] == '\n'; --buf.size, buf.bp[buf.size-1] = '\0');
 				String* s = CombinedSelector_string(*sel_ptr);
 				printf("Selector: '%s' matches -> node '%s'\n",
 					   s->str,
@@ -34,22 +47,6 @@ static void tree_traversal(TidyDoc tdoc, TidyNode root, CombinedSelector** sel_g
 				tidyBufFree(&buf);
 				string_free(s);
 			}
-//			if (!(*sel_ptr)->first) {
-//				continue;
-//			}
-//			SimpleSelector* sel = (*sel_ptr)->first->selectors[0];
-//			if (sel) {
-//				if (SimpleSelector_match(sel, child)) {
-//					TidyBuffer buf = {0};
-//					tidyNodeGetText(tdoc, child, &buf);
-//					printf("Selector: '%s' matches -> node '%s'\n",
-//						   sel->val->str,
-//						   buf.bp
-//					);
-//					tidyBufFree(&buf);
-////					printf("Node type: %d\n", tidyNodeGetType(child));
-//				}
-//			}
 		}
 		tree_traversal(tdoc, child, sel_group);
 	}
@@ -58,8 +55,7 @@ static void tree_traversal(TidyDoc tdoc, TidyNode root, CombinedSelector** sel_g
 int main() {
 	Parser p;
 
-	#define SELECTOR_GROUP_LEN	16
-	CombinedSelector* selector_group[SELECTOR_GROUP_LEN];
+	SelectorGroup selector_group = {0};
 
 	TidyBuffer output = {0};
 	TidyBuffer errbuf = {0};
@@ -96,10 +92,10 @@ int main() {
 			);
 			continue;
 		}
-		if (rc > 0) {
-			printf("\nDiagnostics:\n\n%s", errbuf.bp);
-		}
-		printf("\nAnd here is the result:\n\n%s\n", output.bp);
+//		if (rc > 0) {
+//			printf("\nDiagnostics:\n\n%s", errbuf.bp);
+//		}
+//		printf("\nAnd here is the result:\n\n%s\n", output.bp);
 
 		TidyNode root = tidyGetRoot(tdoc);
 		if (!root) {
@@ -128,8 +124,6 @@ int main() {
 
 exit:
 
-//	tidyBufFree(&output);
-//	tidyBufFree(&errbuf);
 	tidyRelease(tdoc);
 
 	return 0;

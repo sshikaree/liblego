@@ -22,6 +22,8 @@ parser.c:
 
 selector.c:
 ----------
+	- Implement SelectorGroup type
+		-- Implement dynamic array or linked list??
 	- Implement matching functions:
 		-- 'SimpleSelectorType_ATTR' section in SimpleSelector_match()	
 		++ CombinedSelector_match()
@@ -29,3 +31,8 @@ selector.c:
 		-- Selector_match()
 		
 	- Move API to Selector
+	
+	
+Issues:
+-------
+	- "*" selector test not passed

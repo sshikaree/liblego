@@ -3,11 +3,12 @@
 
 #include <stdbool.h>
 
-#include "../../dynamic_string/dynamic_string.h"
+#include "util/dynamic_string.h"
 #include <tidy/tidy.h>
 
-#define SPEC_LEN 3 // Specifity array length
-#define MAX_SELECTORS_NUM 32 // Max SimpleSelectors array size in CompoundSelector
+#define SPEC_LEN			3	// Specifity array length
+#define MAX_SELECTORS_NUM	32	// Max SimpleSelectors array size in CompoundSelector. TODO: Should it be dynamic array??
+#define SELECTOR_GROUP_LEN	16	// Max SelectorGroup array size. TODO: Should it be dynamic array??
 
 // Specificity is the CSS specificity as defined in
 // https://www.w3.org/TR/selectors/#specificity-rules
@@ -70,18 +71,6 @@ void			SimpleSelector_specificity(SimpleSelector* sel, Specificity spec);
 bool			SimpleSelector_match(SimpleSelector* sel, TidyNode node);
 String*			SimpleSelector_string(SimpleSelector* sel);
 
-//typedef String TagSelector;
-//extern const int TagSelectorSpecifity[SPEC_LEN];
-//extern const char* TagSelectorPseudoElement;
-
-//typedef String ClassSelector;
-//extern const int ClassSelectorSpecifity[SPEC_LEN];
-//extern const char* ClassSelectorPseudoElement;
-
-//typedef String IDSelector;
-//extern const int IDSelectorSpecifity[SPEC_LEN];
-//extern const char* IDSelectorPseudoElement;
-
 
 // ****************
 // CompoundSelector
@@ -134,6 +123,19 @@ Selector*	Selector_new(SelectorType sel_type, SimpleSelectorType smpl_sel_type);
 void		Selector_free(Selector* sel);
 void		Selector_specificity(Selector* sel, Specificity spec);
 bool		Selector_match(Selector* sel, TidyNode* tnod);
+
+
+
+// *************
+// SelectorGroup
+// *************
+typedef CombinedSelector* SelectorGroup[SELECTOR_GROUP_LEN];
+//typedef struct SelectorGroup {
+//	CombinedSelector*	group_array[SELECTOR_GROUP_LEN];
+//	size_t				elements_num;
+//} SelectorGroup;
+
+
 
 
 

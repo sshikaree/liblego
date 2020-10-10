@@ -20,7 +20,7 @@ typedef unsigned long ulong;
 typedef unsigned int uint;
 #include <tidy/tidy.h>
 
-#include "../../dynamic_string/dynamic_string.h"
+#include "util/dynamic_string.h"
 #include "selector.h"
 
 typedef unsigned char byte;
@@ -89,7 +89,12 @@ ParserError parseQuoted(Parser* p, String* result);
 ParserError parseSelector(Parser* p, CombinedSelector* comb_sel);
 
 // parseSelectorGroup parses a group of selectors, separated by commas.
-ParserError parseSelectorGroup(Parser *p, CombinedSelector* sel_group[], int group_size);
+ParserError parseSelectorGroup(Parser *p, SelectorGroup sel_group, int group_size);
+
+
+// ******************************
+// *	Public API functions	*
+// ******************************
 
 
 

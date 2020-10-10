@@ -17,8 +17,8 @@ set(
     src/parser.c
     src/parser.h
 
-	../dynamic_string/dynamic_string.h
-	../dynamic_string/dynamic_string.c
+	src/util/dynamic_string.h
+	src/util/dynamic_string.c
 )
 
 set(

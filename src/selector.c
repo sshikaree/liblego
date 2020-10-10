@@ -22,18 +22,6 @@ int* Specificity_add(Specificity dst, Specificity src) {
 	return dst;
 }
 
-
-//const int TagSelectorSpecifity[SPEC_LEN] = {0, 0, 1};
-//const char* TagSelectorPseudoElement = "";
-
-//const int ClassSelectorSpecifity[SPEC_LEN] = {0, 1, 0};
-//const char* ClassSelectorPseudoElement = "";
-
-//const int IDSelectorSpecifity[SPEC_LEN] = {1, 0, 0};
-//const char* IDSelectorPseudoElement = "";
-
-
-
 // **************
 // SimpleSelector
 // **************
@@ -56,25 +44,6 @@ SimpleSelector* SimpleSelector_new(SimpleSelectorType type) {
         free(sel);
         return NULL;
     }
-//    switch (type) {
-//    case SimpleSelectorType_ID:
-//        sel->spec[0] = 1;
-//        sel->spec[1] = 0;
-//        sel->spec[2] = 0;
-//        break;
-//    case SimpleSelectorType_CLASS:
-//        sel->spec[0] = 0;
-//        sel->spec[1] = 1;
-//        sel->spec[2] = 0;
-//        break;
-//    case SimpleSelectorType_TAG:
-//        sel->spec[0] = 0;
-//        sel->spec[1] = 0;
-//        sel->spec[2] = 1;
-//        break;
-//    case SimpleSelectorType_PSEUDO:
-//        break;
-//    }
 
     return sel;
 }
@@ -273,7 +242,7 @@ String* CompoundSelector_string(CompoundSelector* comp_sel) {
 		return string_new("*");
 	}
 	String* ret_s = string_new(NULL);
-	String* ss = string_new(NULL);
+	String* ss;
 	for (size_t i = 0; i < comp_sel->sel_num; ++i) {
 		ss = SimpleSelector_string(comp_sel->selectors[i]);
 		ret_s = string_append(ret_s, ss->str);

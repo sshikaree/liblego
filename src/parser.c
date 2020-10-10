@@ -6,9 +6,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "../../dynamic_string/dynamic_string.h"
+#include "util/dynamic_string.h"
 
-// const char combinators[] = {' ', '>', '~', '+'};
 
 // ParserError_toString returns error string, corresponding to given error code.
 // Do not try to free resulting string!
@@ -537,7 +536,7 @@ ParserError parseSelector(Parser* p, CombinedSelector* comb_sel) {
 }
 
 // parseSelectorGroup parses a group of selectors, separated by commas.
-ParserError parseSelectorGroup(Parser *p, CombinedSelector* sel_group[], int group_size){
+ParserError parseSelectorGroup(Parser *p, SelectorGroup sel_group, int group_size){
 	int i = 0;
 	memset(sel_group, 0, (size_t)group_size);
 	CombinedSelector* comb_sel = CombinedSelector_new();

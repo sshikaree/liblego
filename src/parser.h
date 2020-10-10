@@ -49,8 +49,8 @@ typedef struct Parser {
     char*           s;                              // source string
     size_t          s_len;                          // source string length
     char*           pos;                            // current position in the source string
-//    SimpleSelector  selectors[MAX_SELECTORS_NUM];   // array of found selectors. Do we need it??
-//    int             sel_count;                      // number of found selectors
+//    SelectorGroup  sel_group;						// array of found selectors. Do we need it??
+//    size_t		 sel_group_count;				// number of found selectors
 } Parser;
 
 
@@ -58,10 +58,6 @@ const char* ParserError_toString(ParserError err);
 
 // Parser_init inits Parser with given source string.
 void Parser_init(Parser* p, char *source_string);
-
-// appendSelector adds selector to the p->selectors.
-ParserError appendSelector(Parser* p, SimpleSelector* sel);
-
 
 // skipWhitespace consumes whitespace characters and comments.
 // It returns true if there was actually anything to skip.
@@ -86,16 +82,20 @@ ParserError parseQuoted(Parser* p, String* result);
 //int Parser_parseSimpleSelectorSequence(Parser* p);
 
 // parseSelector parses a selector that may include combinators.
-ParserError parseSelector(Parser* p, CombinedSelector* comb_sel);
+//ParserError parseSelector(Parser* p, CombinedSelector* comb_sel);
 
 // parseSelectorGroup parses a group of selectors, separated by commas.
-ParserError parseSelectorGroup(Parser *p, SelectorGroup sel_group, int group_size);
+//ParserError parseSelectorGroup(Parser *p, SelectorGroup sel_group, int group_size);
 
 
 // ******************************
 // *	Public API functions	*
 // ******************************
 
+
+// Parse_compile parses a selector, or a group of selectors separated by commas and
+// stores result into @sg
+ParserError Parser_compile(Parser* p, SelectorGroup sg);
 
 
 #endif    // PARSER_H

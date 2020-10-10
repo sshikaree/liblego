@@ -35,10 +35,6 @@ void Parser_init(Parser* p, char* source_string) {
     p->s = source_string;
     p->s_len = strlen(source_string);
     p->pos = source_string;
-//    for (int i = 0; i < MAX_SELECTORS_NUM; ++i) {
-//        p->selectors[i].len = 0;
-//        p->selectors[i].start = NULL;
-//    }
 }
 
 
@@ -494,7 +490,7 @@ loop_exit:
 
 // Should rename to parseCombinedSelector ??
 // parseSelector parses a selector that may include combinators.
-ParserError parseSelector(Parser* p, CombinedSelector* comb_sel) {
+static ParserError parseSelector(Parser* p, CombinedSelector* comb_sel) {
     skipWhitespace(p);
 	CompoundSelector* first_sel = CompoundSelector_new();
 	ParserError err = parseSimpleSelectorSequence(p, first_sel);
@@ -536,7 +532,7 @@ ParserError parseSelector(Parser* p, CombinedSelector* comb_sel) {
 }
 
 // parseSelectorGroup parses a group of selectors, separated by commas.
-ParserError parseSelectorGroup(Parser *p, SelectorGroup sel_group, int group_size){
+static ParserError parseSelectorGroup(Parser *p, SelectorGroup sel_group, int group_size){
 	int i = 0;
 	memset(sel_group, 0, (size_t)group_size);
 	CombinedSelector* comb_sel = CombinedSelector_new();
@@ -571,7 +567,11 @@ ParserError parseSelectorGroup(Parser *p, SelectorGroup sel_group, int group_siz
 	return ParserError_NO_ERROR;
 }
 
-
+// Parse_compile parses a selector, or a group of selectors separated by commas and
+// stores result into @sg
+ParserError Parser_compile(Parser* p, SelectorGroup sg) {
+	return parseSelectorGroup(p, sg, SELECTOR_GROUP_LEN);
+}
 
 
 

@@ -51,6 +51,7 @@ typedef enum {
 // **************
 // SimpleSelector
 // **************
+
 typedef struct SimpleSelector {
     SimpleSelectorType  type;
 	String* val;
@@ -75,6 +76,7 @@ String*			SimpleSelector_string(SimpleSelector* sel);
 // ****************
 // CompoundSelector
 // ****************
+
 // Maybe ComplexSelector??
 typedef struct CompoundSelector {
 	String*         pseudo_element;
@@ -93,6 +95,7 @@ String*				CompoundSelector_string(CompoundSelector* comp_sel);
 // ****************
 // CombinedSelector
 // ****************
+
 typedef struct CombinedSelector {
 	CompoundSelector*	first;
 	CompoundSelector*	second;
@@ -109,6 +112,7 @@ String*				CombinedSelector_string(CombinedSelector* comb_sel);
 // ********
 // Selector
 // ********
+
 typedef struct Selector {
     SelectorType  type;
     union {
@@ -129,6 +133,8 @@ bool		Selector_match(Selector* sel, TidyNode* tnod);
 // *************
 // SelectorGroup
 // *************
+
+// Must be zero-terminated
 typedef CombinedSelector* SelectorGroup[SELECTOR_GROUP_LEN];
 //typedef struct SelectorGroup {
 //	CombinedSelector*	group_array[SELECTOR_GROUP_LEN];
@@ -136,6 +142,14 @@ typedef CombinedSelector* SelectorGroup[SELECTOR_GROUP_LEN];
 //} SelectorGroup;
 
 
+// Callback function prototype to use with findFirst() and findAll() functions.
+typedef void (*callBackFunc)(TidyDoc tdoc, TidyNode node, void* userdata);
+
+// Finds first matching element starting from @root node and applies @cb function.
+void findFirst(TidyDoc tdoc, TidyNode root, SelectorGroup sg, callBackFunc cb, void* userdata);
+
+// Finds all matching elements starting from @root node and applies @cb function.
+void findAll(TidyDoc tdoc, TidyNode root, SelectorGroup sg, callBackFunc cb, void* userdata);
 
 
 

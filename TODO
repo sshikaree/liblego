@@ -30,7 +30,8 @@ selector.c:
 		++ CompoundSelector_match()
 		-- Selector_match()
 		
-	- Move API to Selector
+	- Make public API use Selector?
+	
 	
 	
 Issues:

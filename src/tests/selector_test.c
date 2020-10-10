@@ -26,8 +26,20 @@ static char selector_samples[][128] = {
 	"div.teST"
 };
 
+static void cb_printFunc(TidyDoc tdoc, TidyNode node, void* userdata) {
+	TidyBuffer buf = {0};
+	tidyNodeGetText(tdoc, node, &buf);
+	// Get rid of trailing '\n'-s
+	for (; buf.size-1 > 0 && buf.bp[buf.size-1] == '\n'; --buf.size, buf.bp[buf.size-1] = '\0');
+//	String* s = CombinedSelector_string(*sel_ptr);
+	printf("Matched -> node '%s'\n",
+		   buf.bp
+		   );
+	tidyBufFree(&buf);
+//	string_free(s);
+}
 
-static void tree_traversal(TidyDoc tdoc, TidyNode root, CombinedSelector** sel_group) {
+static void tree_traversal(TidyDoc tdoc, TidyNode root, SelectorGroup sel_group) {
 	for (TidyNode child = tidyGetChild(root); child; child = tidyGetNext(child)) {
 //		printf("Node name: %s\n", tidyNodeGetName(child));
 		for (CombinedSelector** sel_ptr = sel_group; *sel_ptr; ++sel_ptr) {
@@ -103,7 +115,7 @@ int main() {
 			continue;
 		}
 
-		ParserError err = parseSelectorGroup(&p, selector_group, SELECTOR_GROUP_LEN);
+		ParserError err = Parser_compile(&p, selector_group);
 		if (err) {
 			fprintf(stderr, "%s\n", ParserError_toString(err));
 			continue;
@@ -111,7 +123,8 @@ int main() {
 
 
 		// traversal here
-		tree_traversal(tdoc, root, selector_group);
+//		tree_traversal(tdoc, root, selector_group);
+		findAll(tdoc, root, selector_group, cb_printFunc, NULL);
 		puts("**********************************\n");
 
 

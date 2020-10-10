@@ -39,7 +39,7 @@ int main() {
         printf("Wanted: '%s'\n", identifierTestSamples[1][i]);
 
         Parser_init(&p, identifierTestSamples[0][i]);
-        skipWhitespace(&p);
+		skipWhitespace(&p);
 
         String* result = string_new(NULL);
         ParserError err = parseIdentifier(&p, result);
@@ -63,7 +63,7 @@ int main() {
         printf("Source string: '%s'\n", quotedTestSamples[0][i]);
         printf("Wanted: '%s'\n", quotedTestSamples[1][i]);
         Parser_init(&p, quotedTestSamples[0][i]);
-        skipWhitespace(&p);
+		skipWhitespace(&p);
 
         String* result = string_new(NULL);
         ParserError err = parseQuoted(&p, result);

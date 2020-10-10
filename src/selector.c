@@ -1,4 +1,6 @@
 #include "../src/selector.h"
+#include <tidy/tidy.h>
+//#include <tidy/tidybuffio.h>
 
 
 // returns `true` if @first < @second (strictly), false otherwise
@@ -378,4 +380,39 @@ String*	CombinedSelector_string(CombinedSelector* comb_sel) {
 		string_free(ss);
 	}
 	return ret_s;
+}
+
+
+// Finds first matching element starting from @root node and applies @cb function.
+void findFirst(TidyDoc tdoc, TidyNode root, SelectorGroup sg, callBackFunc cb, void* userdata) {
+	for (TidyNode child = tidyGetChild(root); child; child = tidyGetNext(child)) {
+//		printf("Node name: %s\n", tidyNodeGetName(child));
+		for (CombinedSelector** sg_tmp = sg; *sg_tmp; ++sg_tmp) {
+//			String* s = CombinedSelector_string(*sg);
+//			printf("Selector: %s\n", s->str);
+//			string_free(s);
+			if (CombinedSelector_match(*sg, child)) {
+				cb(tdoc, child, userdata);
+				return;
+			}
+		}
+		findFirst(tdoc, child, sg, cb, userdata);
+	}
+}
+
+
+// Finds all matching elements starting from @root node and applies @cb function.
+void findAll(TidyDoc tdoc, TidyNode root, SelectorGroup sg, callBackFunc cb, void* userdata) {
+	for (TidyNode child = tidyGetChild(root); child; child = tidyGetNext(child)) {
+//		printf("Node name: %s\n", tidyNodeGetName(child));
+		for (CombinedSelector** sg_tmp = sg; *sg_tmp; ++sg_tmp) {
+//			String* s = CombinedSelector_string(*sg);
+//			printf("Selector: %s\n", s->str);
+//			string_free(s);
+			if (CombinedSelector_match(*sg, child)) {
+				cb(tdoc, child, userdata);
+			}
+		}
+		findAll(tdoc, child, sg, cb, userdata);
+	}
 }

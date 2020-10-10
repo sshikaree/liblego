@@ -157,10 +157,40 @@ bool SimpleSelector_match(SimpleSelector* sel, TidyNode node) {
 		tattr_value = tidyNodeGetName(node);
 		return (tattr_value && (strcmp(tattr_value, sel->val->str) == 0));
 	case SimpleSelectorType_ATTR:
+		//
+		// TBD
+		//
 		break;
 	}
 
 	return false;
+}
+
+// Returns string representation of the SimpleSelector.
+String* SimpleSelector_string(SimpleSelector* sel) {
+	String* ret_s = string_new(NULL);
+	switch (sel->type) {
+	case SimpleSelectorType_TAG:
+		ret_s = string_append(ret_s, sel->val->str);
+		break;
+	case SimpleSelectorType_ID:
+		ret_s = string_append_c(ret_s, '#');
+		ret_s = string_append(ret_s, sel->val->str);
+		break;
+	case SimpleSelectorType_CLASS:
+		ret_s = string_append_c(ret_s, '.');
+		ret_s = string_append(ret_s, sel->val->str);
+		break;
+	case SimpleSelectorType_ATTR:
+		//
+		// TODO
+		//
+		break;
+
+	}
+
+	return ret_s;
+
 }
 
 // ****************
@@ -207,7 +237,7 @@ void CompoundSelector_addSelector(CompoundSelector* csel, SimpleSelector* ssel) 
 		return;
 	}
 	csel->selectors[csel->sel_num] = ssel;
-	++csel->sel_num;
+	csel->sel_num++;
 }
 
 
@@ -224,6 +254,38 @@ void CompoundSelector_specificity(CompoundSelector* sel, Specificity spec) {
 	}
 }
 
+// Matches elements if each sub-selectors matches.
+bool CompoundSelector_match(CompoundSelector* comp_sel, TidyNode node) {
+	if (comp_sel->sel_num == 0) {
+		return tidyNodeGetType(node) == TidyNode_StartEnd;
+	}
+	for (size_t i = 0; i < comp_sel->sel_num; ++ i) {
+		if (!SimpleSelector_match(comp_sel->selectors[i], node)) {
+			return false;
+		}
+	}
+	return true;
+}
+
+// Returns string representation of the selector.
+String* CompoundSelector_string(CompoundSelector* comp_sel) {
+	if (comp_sel->sel_num == 0 && comp_sel->pseudo_element->len == 0) {
+		return string_new("*");
+	}
+	String* ret_s = string_new(NULL);
+	String* ss = string_new(NULL);
+	for (size_t i = 0; i < comp_sel->sel_num; ++i) {
+		ss = SimpleSelector_string(comp_sel->selectors[i]);
+		ret_s = string_append(ret_s, ss->str);
+		string_free(ss);
+	}
+	if (comp_sel->pseudo_element->len != 0) {
+		ret_s = string_append(ret_s, "::");
+		ret_s = string_append(ret_s, comp_sel->pseudo_element->str);
+	}
+	return ret_s;
+}
+
 
 // ****************
 // CombinedSelector
@@ -236,6 +298,7 @@ CombinedSelector* CombinedSelector_new(void) {
 	}
 	comb_sel->first = NULL;
 	comb_sel->second = NULL;
+	comb_sel->combinator = 0;
 	return comb_sel;
 }
 
@@ -259,4 +322,91 @@ void CombinedSelector_specificity(CombinedSelector* comb_sel, Specificity spec){
 		CompoundSelector_specificity(comb_sel->second, tmp);
 		Specificity_add(spec, tmp);
 	}
+}
+
+// matches an element if it matches @second and has an ancestor that matches @first.
+static bool descendantMatch(CompoundSelector* first, CompoundSelector* second, TidyNode node) {
+	if (!CompoundSelector_match(second, node)) {
+		return false;
+	}
+	for (TidyNode parent = tidyGetParent(node); parent; parent = tidyGetParent(parent)) {
+		if (CompoundSelector_match(first, parent)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+// matches an element if it matches &second and its parent matches @first.
+static bool childMatch(CompoundSelector* first, CompoundSelector* second, TidyNode node) {
+	TidyNode parent = tidyGetParent(node);
+	return (
+			CompoundSelector_match(second, node) &&
+			parent &&
+			CompoundSelector_match(first, parent)
+	);
+}
+
+// matches an element if it matches @second and is preceded by an element that matches @first.
+// If @adjacent is true, the sibling must be immediately before the element.
+static bool siblingMatch(CompoundSelector* first,
+						 CompoundSelector* second,
+						 bool adjacent,
+						 TidyNode node) {
+	if (!CompoundSelector_match(second, node)) {
+		return false;
+	}
+	if (adjacent) {
+		TidyNodeType t;
+		for (node = tidyGetPrev(node); node; node = tidyGetPrev(node)) {
+			t = tidyNodeGetType(node);
+			if (t == TidyNode_Text || t == TidyNode_Comment) {
+				continue;
+			}
+			return CompoundSelector_match(first, node);
+		}
+		return false;
+	}
+
+	// Walk backwards looking for element that matches s1
+	// TODO: Is new variable needed here?? Maybe just use node?
+	for (TidyNode c = tidyGetPrev(node); c; c = tidyGetPrev(c)) {
+		if (CompoundSelector_match(first, c)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+bool CombinedSelector_match(CombinedSelector* comb_sel, TidyNode node) {
+	if (!comb_sel->first) {
+		return false;
+	}
+	switch (comb_sel->combinator) {
+	case 0:
+		return CompoundSelector_match(comb_sel->first, node);
+	case ' ':
+		return descendantMatch(comb_sel->first, comb_sel->second, node);
+	case '>':
+		return childMatch(comb_sel->first, comb_sel->second, node);
+	case '+':
+		return siblingMatch(comb_sel->first, comb_sel->second, true, node);
+	case '~':
+		return siblingMatch(comb_sel->first, comb_sel->second, false, node);
+	}
+	return false;
+}
+
+
+// Returns string repersentation of the selector.
+// TODO: Add spaces between selectors and combinator??
+String*	CombinedSelector_string(CombinedSelector* comb_sel) {
+	String* ret_s = CompoundSelector_string(comb_sel->first);
+	if (comb_sel->second) {
+		ret_s = string_append_c(ret_s, comb_sel->combinator);
+		String* ss = CompoundSelector_string(comb_sel->second);
+		ret_s = string_append(ret_s, ss->str);
+		string_free(ss);
+	}
+	return ret_s;
 }

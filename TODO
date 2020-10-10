@@ -15,7 +15,17 @@ parser.c:
 	+ Implement parseSimpleSelectorSequence
 	+ Implement parseSelector
 	+ Implement parseSelectorGroup
+	
+	- Implement _string() methods:
+		-- SimpleSelector_string():
+			--- Implement 'SimpleSelectorType_ATTR' case section (we need regexp)
 
 selector.c:
 ----------
-	- Implement matching functions.	
+	- Implement matching functions:
+		-- 'SimpleSelectorType_ATTR' section in SimpleSelector_match()	
+		++ CombinedSelector_match()
+		++ CompoundSelector_match()
+		-- Selector_match()
+		
+	- Move API to Selector

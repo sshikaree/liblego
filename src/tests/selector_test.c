@@ -23,24 +23,33 @@ static void tree_traversal(TidyDoc tdoc, TidyNode root, CombinedSelector** sel_g
 	for (TidyNode child = tidyGetChild(root); child; child = tidyGetNext(child)) {
 //		printf("Node name: %s\n", tidyNodeGetName(child));
 		for (CombinedSelector** sel_ptr = sel_group; *sel_ptr; ++sel_ptr) {
-			if (!(*sel_ptr)->first) {
-				continue;
+			if (CombinedSelector_match(*sel_ptr, child)) {
+				TidyBuffer buf = {0};
+				tidyNodeGetText(tdoc, child, &buf);
+				String* s = CombinedSelector_string(*sel_ptr);
+				printf("Selector: '%s' matches -> node '%s'\n",
+					   s->str,
+					   buf.bp
+					   );
+				tidyBufFree(&buf);
+				string_free(s);
 			}
-			SimpleSelector* sel = (*sel_ptr)->first->selectors[0];
-			if (sel) {
-				if (SimpleSelector_match(sel, child)) {
-					TidyBuffer buf = {0};
-					tidyNodeGetText(tdoc, child, &buf);
-					printf("Selector: '%s' matches -> node '%s'\n",
-						   sel->val->str,
-//						   tidyNodeGetName(child)
-						   buf.bp
-					);
-					tidyBufFree(&buf);
-
-//					printf("Node type: %d\n", tidyNodeGetType(child));
-				}
-			}
+//			if (!(*sel_ptr)->first) {
+//				continue;
+//			}
+//			SimpleSelector* sel = (*sel_ptr)->first->selectors[0];
+//			if (sel) {
+//				if (SimpleSelector_match(sel, child)) {
+//					TidyBuffer buf = {0};
+//					tidyNodeGetText(tdoc, child, &buf);
+//					printf("Selector: '%s' matches -> node '%s'\n",
+//						   sel->val->str,
+//						   buf.bp
+//					);
+//					tidyBufFree(&buf);
+////					printf("Node type: %d\n", tidyNodeGetType(child));
+//				}
+//			}
 		}
 		tree_traversal(tdoc, child, sel_group);
 	}
@@ -90,8 +99,7 @@ int main() {
 		if (rc > 0) {
 			printf("\nDiagnostics:\n\n%s", errbuf.bp);
 		}
-		printf("\nAnd here is the result:\n\n%s", output.bp);
-		puts("**********************************\n");
+		printf("\nAnd here is the result:\n\n%s\n", output.bp);
 
 		TidyNode root = tidyGetRoot(tdoc);
 		if (!root) {
@@ -108,6 +116,7 @@ int main() {
 
 		// traversal here
 		tree_traversal(tdoc, root, selector_group);
+		puts("**********************************\n");
 
 
 		for (CombinedSelector** sel_ptr = &selector_group[0]; *sel_ptr; ++sel_ptr) {

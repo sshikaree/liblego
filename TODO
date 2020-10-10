@@ -22,7 +22,8 @@ parser.c:
 
 selector.c:
 ----------
-	- Implement SelectorGroup type
+	+ Implement SelectorGroup type
+		++ SelectorGroup_free()
 		-- Implement dynamic array or linked list??
 	- Implement matching functions:
 		-- 'SimpleSelectorType_ATTR' section in SimpleSelector_match()	
@@ -31,8 +32,7 @@ selector.c:
 		-- Selector_match()
 		
 	- Make public API use Selector?
-	
-	
+
 	
 Issues:
 -------

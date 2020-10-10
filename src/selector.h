@@ -136,10 +136,8 @@ bool		Selector_match(Selector* sel, TidyNode* tnod);
 
 // Must be zero-terminated
 typedef CombinedSelector* SelectorGroup[SELECTOR_GROUP_LEN];
-//typedef struct SelectorGroup {
-//	CombinedSelector*	group_array[SELECTOR_GROUP_LEN];
-//	size_t				elements_num;
-//} SelectorGroup;
+
+void SelectorGroup_free(SelectorGroup sg);
 
 
 // Callback function prototype to use with findFirst() and findAll() functions.

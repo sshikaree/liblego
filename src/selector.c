@@ -401,6 +401,13 @@ void findFirst(TidyDoc tdoc, TidyNode root, SelectorGroup sg, callBackFunc cb, v
 }
 
 
+void SelectorGroup_free(SelectorGroup sg) {
+	for (CombinedSelector** sel_ptr = sg; *sel_ptr; ++sel_ptr) {
+			CombinedSelector_free(*sel_ptr);
+	}
+}
+
+
 // Finds all matching elements starting from @root node and applies @cb function.
 void findAll(TidyDoc tdoc, TidyNode root, SelectorGroup sg, callBackFunc cb, void* userdata) {
 	for (TidyNode child = tidyGetChild(root); child; child = tidyGetNext(child)) {

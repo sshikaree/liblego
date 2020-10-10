@@ -1,6 +1,8 @@
 #include "../parser.h"
 #include "../selector.h"
 
+#include <stdio.h>
+
 #include <tidy/tidy.h>
 #include <tidy/tidybuffio.h>
 
@@ -63,6 +65,7 @@ static void tree_traversal(TidyDoc tdoc, TidyNode root, SelectorGroup sel_group)
 		tree_traversal(tdoc, child, sel_group);
 	}
 }
+
 
 int main() {
 	Parser p;

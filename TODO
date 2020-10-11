@@ -27,6 +27,7 @@ selector.c:
 		-- Implement dynamic array or linked list??
 	- Implement matching functions:
 		-- 'SimpleSelectorType_ATTR' section in SimpleSelector_match()	
+			--- Implement the rest of the operators
 		++ CombinedSelector_match()
 		++ CompoundSelector_match()
 		-- Selector_match()

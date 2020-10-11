@@ -104,8 +104,68 @@ void SimpleSelector_specificity(SimpleSelector *sel, Specificity spec) {
 	case SimpleSelectorType_PSEUDO:
 		//
 		// TODO!!
+		fprintf(stderr,
+				"SimpleSelector_specificity() for SimpleSelectorType_PSEUDO is not implemented yet.\n"
+				);
 		break;
 	}
+}
+
+static bool matchAttribute(SimpleSelector* sel, TidyNode node) {
+	// ""
+	if (sel->operation->len == 0) {
+		if (tidyNodeGetType(node) != TidyNode_StartEnd) {
+			return false;
+		}
+		for (TidyAttr attr = tidyAttrFirst(node); attr; attr = tidyAttrNext(attr)) {
+			if (strcmp(sel->key->str, tidyAttrName(attr)) == 0) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	// "="
+	if (strcmp(sel->operation->str, "=") == 0) {
+		if (tidyNodeGetType(node) != TidyNode_StartEnd) {
+			return false;
+		}
+		for (TidyAttr attr = tidyAttrFirst(node); attr; attr = tidyAttrNext(attr)) {
+			if (
+				strcmp(sel->key->str, tidyAttrName(attr)) == 0 &&
+				strcmp(sel->val->str, tidyAttrValue(attr)) == 0
+				) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	// "!="
+	if (strcmp(sel->operation->str, "!=") == 0) {
+		if (tidyNodeGetType(node) != TidyNode_StartEnd) {
+			return false;
+		}
+		for (TidyAttr attr = tidyAttrFirst(node); attr; attr = tidyAttrNext(attr)) {
+			if (
+				strcmp(sel->key->str, tidyAttrName(attr)) == 0 &&
+				strcmp(sel->val->str, tidyAttrValue(attr)) == 0
+				) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	// "~="
+	// matches elements where the attribute named @key is a whitespace-separated list that includes @val.
+//	if (strcmp(sel->operation->str, "~=") == 0) {
+//	}
+
+
+
+	fprintf(stderr, "Unsupported operation: %s\n", sel->operation->str);
+	return false;
 }
 
 bool SimpleSelector_match(SimpleSelector* sel, TidyNode node) {
@@ -128,10 +188,7 @@ bool SimpleSelector_match(SimpleSelector* sel, TidyNode node) {
 		tattr_value = tidyNodeGetName(node);
 		return (tattr_value && (strcmp(tattr_value, sel->val->str) == 0));
 	case SimpleSelectorType_ATTR:
-		//
-		// TBD
-		//
-		break;
+		return matchAttribute(sel, node);
 	}
 
 	return false;

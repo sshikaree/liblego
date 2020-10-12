@@ -46,8 +46,35 @@ SimpleSelector* SimpleSelector_new(SimpleSelectorType type) {
         free(sel);
         return NULL;
     }
+	if (type == SimpleSelectorType_ATTR) {
+		sel->key = string_new(NULL);
+		if (!sel->key) {
+			free(sel->pseudo_element);
+			free(sel->val);
+			free(sel);
+			return NULL;
+		}
+		sel->operation = string_new(NULL);
+		if (!sel->operation) {
+			free(sel->key);
+			free(sel->pseudo_element);
+			free(sel->val);
+			free(sel);
+			return NULL;
+		}
+		sel->regexp = string_new(NULL);
+		if (!sel->regexp) {
+			free(sel->operation);
+			free(sel->key);
+			free(sel->pseudo_element);
+			free(sel->val);
+			free(sel);
+			return NULL;
+		}
+	}
 
-    return sel;
+
+	return sel;
 }
 
 void SimpleSelector_free(SimpleSelector* sel) {
@@ -60,7 +87,6 @@ void SimpleSelector_free(SimpleSelector* sel) {
 	if (sel->pseudo_element) {
 		string_free(sel->pseudo_element);
 	}
-
 	if (sel->type == SimpleSelectorType_ATTR) {
 		if (sel->key) {
 			string_free(sel->key);
@@ -68,7 +94,6 @@ void SimpleSelector_free(SimpleSelector* sel) {
 		if (sel->operation) {
 			string_free(sel->operation);
 		}
-
 		if (sel->regexp) {
 			string_free(sel->regexp);
 		}
@@ -129,8 +154,9 @@ static bool matchInclude(const char* val, const char* s) {
 
 static bool matchAttribute(SimpleSelector* sel, TidyNode node) {
 	// ""
+//	printf("Current node Type = %d\n", tidyNodeGetType(node));
 	if (sel->operation->len == 0) {
-		if (tidyNodeGetType(node) != TidyNode_StartEnd) {
+		if (tidyNodeGetType(node) != TidyNode_Start) {
 			return false;
 		}
 		for (TidyAttr attr = tidyAttrFirst(node); attr; attr = tidyAttrNext(attr)) {
@@ -143,7 +169,7 @@ static bool matchAttribute(SimpleSelector* sel, TidyNode node) {
 
 	// "="
 	if (strcmp(sel->operation->str, "=") == 0) {
-		if (tidyNodeGetType(node) != TidyNode_StartEnd) {
+		if (tidyNodeGetType(node) != TidyNode_Start) {
 			return false;
 		}
 		for (TidyAttr attr = tidyAttrFirst(node); attr; attr = tidyAttrNext(attr)) {
@@ -159,7 +185,7 @@ static bool matchAttribute(SimpleSelector* sel, TidyNode node) {
 
 	// "!="
 	if (strcmp(sel->operation->str, "!=") == 0) {
-		if (tidyNodeGetType(node) != TidyNode_StartEnd) {
+		if (tidyNodeGetType(node) != TidyNode_Start) {
 			return false;
 		}
 		for (TidyAttr attr = tidyAttrFirst(node); attr; attr = tidyAttrNext(attr)) {
@@ -176,7 +202,7 @@ static bool matchAttribute(SimpleSelector* sel, TidyNode node) {
 	// "~="
 	// matches elements where the attribute named @key is a whitespace-separated list that includes @val.
 	if (strcmp(sel->operation->str, "~=") == 0) {
-		if (tidyNodeGetType(node) != TidyNode_StartEnd) {
+		if (tidyNodeGetType(node) != TidyNode_Start) {
 			return false;
 		}
 		for (TidyAttr attr = tidyAttrFirst(node); attr; attr = tidyAttrNext(attr)) {
@@ -317,7 +343,7 @@ void CompoundSelector_specificity(CompoundSelector* sel, Specificity spec) {
 // Matches elements if each sub-selectors matches.
 bool CompoundSelector_match(CompoundSelector* comp_sel, TidyNode node) {
 	if (comp_sel->sel_num == 0) {
-		return tidyNodeGetType(node) == TidyNode_StartEnd;
+		return tidyNodeGetType(node) == TidyNode_Start;
 	}
 	for (size_t i = 0; i < comp_sel->sel_num; ++i) {
 		if (!SimpleSelector_match(comp_sel->selectors[i], node)) {
@@ -503,7 +529,7 @@ int findAll(TidyDoc tdoc, TidyNode root, SelectorGroup sg, TidyNode* nodes_array
 		for (CombinedSelector** sel_ptr = sg; *sel_ptr; ++sel_ptr) {
 			if (CombinedSelector_match(*sel_ptr, child)) {
 				nodes_array[0] = child;
-				printf("Node name: %s\n", tidyNodeGetName(nodes_array[0]));
+//				printf("Node name: %s\n", tidyNodeGetName(nodes_array[0]));
 				++nodes_array;
 				--array_size;
 				if (array_size <= 0) {
@@ -511,7 +537,7 @@ int findAll(TidyDoc tdoc, TidyNode root, SelectorGroup sg, TidyNode* nodes_array
 				}
 			}
 		}
-		printf("Array size: %d\n", array_size);
+//		printf("Array size: %d\n", array_size);
 		int new_array_size = findAll(tdoc, child, sg, nodes_array, array_size);
 		if (new_array_size == -1) {
 			return -1;

@@ -384,10 +384,11 @@ static ParserError parseAttributeSelector(Parser *p, SimpleSelector* attr_select
     } else {
         switch (*p->pos) {
         case '\'': case '"':
-			err = parseQuoted(p, attr_selector->key);
+			err = parseQuoted(p, attr_selector->val);
             break;
         default:
-			err = parseIdentifier(p, attr_selector->key);
+			err = parseIdentifier(p, attr_selector->val);
+			break;
         }
     }
     if (err != ParserError_NO_ERROR) {
@@ -403,9 +404,10 @@ static ParserError parseAttributeSelector(Parser *p, SimpleSelector* attr_select
     p->pos++;
 	char* op_str = attr_selector->operation->str;
     if (
-        strcmp(op_str, "=") || strcmp(op_str, "!=") || strcmp(op_str, "~=") ||
-        strcmp(op_str, "|=") || strcmp(op_str, "^=") || strcmp(op_str, "$=") ||
-        strcmp(op_str, "*=") || strcmp(op_str, "#=")
+		strcmp(op_str, "=")	 != 0 && strcmp(op_str, "!=") != 0 &&
+		strcmp(op_str, "~=") != 0 && strcmp(op_str, "|=") != 0 &&
+		strcmp(op_str, "^=") != 0 && strcmp(op_str, "$=") != 0 &&
+		strcmp(op_str, "*=") != 0 && strcmp(op_str, "#=") != 0
     ) {
         return ParserError_WRONG_ATTRIBUTE_OPERATOR;
     }

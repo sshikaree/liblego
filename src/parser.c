@@ -501,17 +501,18 @@ static ParserError parseSelector(Parser* p, CombinedSelector* comb_sel) {
 		return err;
 	}
 	comb_sel->first = first_sel;
-	char combinator = 0;
+//	char combinator = 0;
+	comb_sel->combinator = 0;
 	for (;;) {
 		if (skipWhitespace(p)) {
-			combinator = ' ';
+			comb_sel->combinator = ' ';
 		}
 		if (p->pos >= p->s + p->s_len) {
 			return ParserError_NO_ERROR;
 		}
 		switch (*p->pos) {
 		case '+': case '>': case '~':
-			combinator = *p->pos;
+			comb_sel->combinator = *p->pos;
 			p->pos++;
 			skipWhitespace(p);
 			break;
@@ -519,7 +520,7 @@ static ParserError parseSelector(Parser* p, CombinedSelector* comb_sel) {
 			// These characters can't begin a selector, but they can legally occur after one.
 			return ParserError_NO_ERROR;
 		}
-		if (combinator == 0) {
+		if (comb_sel->combinator == 0) {
 			return ParserError_NO_ERROR;
 		}
 		CompoundSelector* second_sel = CompoundSelector_new();

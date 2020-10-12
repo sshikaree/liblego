@@ -239,7 +239,6 @@ bool SimpleSelector_match(SimpleSelector* sel, TidyNode node) {
 		tattr = tidyAttrGetById(node, TidyAttr_CLASS);
 		if (tattr) {
 			tattr_value = tidyAttrValue(tattr);
-//			printf("AttrValue = '%s'\n", tattr_value);
 		}
 		return (tattr_value && matchInclude(sel->val->str, tattr_value));
 	case SimpleSelectorType_TAG:
@@ -294,8 +293,7 @@ CompoundSelector* CompoundSelector_new(void) {
 		free(sel);
 		return NULL;
 	}
-
-	// Should we memset csel->selectors with '0' here?
+	memset(sel->selectors, 0, MAX_SELECTORS_NUM);
 	return sel;
 }
 

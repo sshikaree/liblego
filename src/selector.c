@@ -137,14 +137,14 @@ void SimpleSelector_specificity(SimpleSelector *sel, Specificity spec) {
 }
 
 // returns true if @s is a whitespace-separated list that includes @val.
-static bool matchInclude(const char* val, const char* s) {
+static bool matchInclude(String* val, const char* s) {
 	size_t len = strlen(s);
 	for (size_t start = 0, pos = 0; start < len && pos <= len; ) {
 		pos += strcspn(s+start, " \t\r\n\f");
 		if (pos >= len) {
-			return (strcmp(s+start, val) == 0);
+			return (strcmp(s+start, val->str) == 0);
 		}
-		if (strncmp(s+start, val, pos-start) == 0) {
+		if (strncmp(s+start, val->str, val->len /*pos-start*/) == 0) {
 			return true;
 		}
 		start += pos+1;
@@ -208,7 +208,7 @@ static bool matchAttribute(SimpleSelector* sel, TidyNode node) {
 		for (TidyAttr attr = tidyAttrFirst(node); attr; attr = tidyAttrNext(attr)) {
 			if (
 				strcmp(sel->key->str, tidyAttrName(attr)) == 0 &&
-				matchInclude(sel->val->str, tidyAttrValue(attr))
+				matchInclude(sel->val, tidyAttrValue(attr))
 				) {
 				return true;
 			}
@@ -240,7 +240,7 @@ bool SimpleSelector_match(SimpleSelector* sel, TidyNode node) {
 		if (tattr) {
 			tattr_value = tidyAttrValue(tattr);
 		}
-		return (tattr_value && matchInclude(sel->val->str, tattr_value));
+		return (tattr_value && matchInclude(sel->val, tattr_value));
 	case SimpleSelectorType_TAG:
 		tattr_value = tidyNodeGetName(node);
 		return (tattr_value && (strcmp(tattr_value, sel->val->str) == 0));

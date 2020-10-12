@@ -6,7 +6,7 @@
 #include <tidy/tidy.h>
 #include <tidy/tidybuffio.h>
 
-#define SAMPLES_NUM	7
+#define SAMPLES_NUM	11
 
 static char html_samples[][128] = {
 	"<body><address>This address...</address></body>",
@@ -14,7 +14,11 @@ static char html_samples[][128] = {
 	"<html><head></head><body></body></html>",
 	"<p id=\"foo\"><p id=\"bar\">",
 	"<ul><li id=\"t1\"><p id=\"t1\">",
-	"<ol><li id=\"t4\"><li id=\"t44\">,"
+	"<ol><li id=\"t4\"><li id=\"t44\">",
+	"<ul><li class=\"t1\"><li class=\"t2\">",
+	"<p class=\"t1 t2\">",
+	"<p class=\"t1 t2\">",
+	"<p class=\"t1 t2\">",
 	"<div class=\"test\">",
 };
 
@@ -25,6 +29,10 @@ static char selector_samples[][128] = {
 	"#foo",
 	"li#t1",
 	"*#t4",
+	".t1",
+	"p.t1",
+	".t1.fail",
+	"p.t1.t2",
 	"div.teST"
 };
 
@@ -84,6 +92,7 @@ int main() {
 
 	for (int i = 0; i < SAMPLES_NUM; ++i) {
 		printf("Selector sample string: '%s'\n", selector_samples[i]);
+		printf("HTML sample string: '%s'\n", html_samples[i]);
 		Parser_init(&p, selector_samples[i]);
 		memset(selector_group, 0, SELECTOR_GROUP_LEN);
 
@@ -107,10 +116,10 @@ int main() {
 			);
 			continue;
 		}
-//		if (rc > 0) {
+		if (rc > 0) {
 //			printf("\nDiagnostics:\n\n%s", errbuf.bp);
-//		}
-//		printf("\nAnd here is the result:\n\n%s\n", output.bp);
+		}
+		printf("\nAnd here is the result:\n\n%s\n", output.bp);
 
 		TidyNode root = tidyGetRoot(tdoc);
 		if (!root) {

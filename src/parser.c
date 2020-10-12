@@ -219,7 +219,7 @@ static ParserError parseName(Parser* p, String* result) {
 }
 
 // parseIdentifier parses an identifier
-// @sel - where parsed selector pointer will be stored
+// @result - where parsed selector pointer will be stored
 ParserError parseIdentifier(Parser *p, String* result) {
     char* c_ptr = p->pos;
     if (*c_ptr == '-') {

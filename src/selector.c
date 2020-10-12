@@ -111,6 +111,22 @@ void SimpleSelector_specificity(SimpleSelector *sel, Specificity spec) {
 	}
 }
 
+// returns true if @s is a whitespace-separated list that includes @val.
+static bool matchInclude(const char* val, const char* s) {
+	size_t len = strlen(s);
+	for (size_t start = 0, pos = 0; start < len && pos <= len; ) {
+		pos += strcspn(s+start, " \t\r\n\f");
+		if (pos >= len) {
+			return (strcmp(s+start, val) == 0);
+		}
+		if (strncmp(s+start, val, pos-start) == 0) {
+			return true;
+		}
+		start += pos+1;
+	}
+	return false;
+}
+
 static bool matchAttribute(SimpleSelector* sel, TidyNode node) {
 	// ""
 	if (sel->operation->len == 0) {
@@ -159,8 +175,20 @@ static bool matchAttribute(SimpleSelector* sel, TidyNode node) {
 
 	// "~="
 	// matches elements where the attribute named @key is a whitespace-separated list that includes @val.
-//	if (strcmp(sel->operation->str, "~=") == 0) {
-//	}
+	if (strcmp(sel->operation->str, "~=") == 0) {
+		if (tidyNodeGetType(node) != TidyNode_StartEnd) {
+			return false;
+		}
+		for (TidyAttr attr = tidyAttrFirst(node); attr; attr = tidyAttrNext(attr)) {
+			if (
+				strcmp(sel->key->str, tidyAttrName(attr)) == 0 &&
+				matchInclude(sel->val->str, tidyAttrValue(attr))
+				) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 
 
@@ -169,6 +197,9 @@ static bool matchAttribute(SimpleSelector* sel, TidyNode node) {
 }
 
 bool SimpleSelector_match(SimpleSelector* sel, TidyNode node) {
+	if (!sel) {
+		return false;
+	}
 	TidyAttr tattr = NULL;
 	ctmbstr	 tattr_value = NULL;
 	switch (sel->type) {
@@ -182,8 +213,9 @@ bool SimpleSelector_match(SimpleSelector* sel, TidyNode node) {
 		tattr = tidyAttrGetById(node, TidyAttr_CLASS);
 		if (tattr) {
 			tattr_value = tidyAttrValue(tattr);
+//			printf("AttrValue = '%s'\n", tattr_value);
 		}
-		return (tattr_value && (strcmp(tattr_value, sel->val->str) == 0));
+		return (tattr_value && matchInclude(sel->val->str, tattr_value));
 	case SimpleSelectorType_TAG:
 		tattr_value = tidyNodeGetName(node);
 		return (tattr_value && (strcmp(tattr_value, sel->val->str) == 0));
@@ -287,7 +319,7 @@ bool CompoundSelector_match(CompoundSelector* comp_sel, TidyNode node) {
 	if (comp_sel->sel_num == 0) {
 		return tidyNodeGetType(node) == TidyNode_StartEnd;
 	}
-	for (size_t i = 0; i < comp_sel->sel_num; ++ i) {
+	for (size_t i = 0; i < comp_sel->sel_num; ++i) {
 		if (!SimpleSelector_match(comp_sel->selectors[i], node)) {
 			return false;
 		}
@@ -440,43 +472,89 @@ String*	CombinedSelector_string(CombinedSelector* comb_sel) {
 }
 
 
-// Finds first matching element starting from @root node and applies @cb function.
-void findFirst(TidyDoc tdoc, TidyNode root, SelectorGroup sg, callBackFunc cb, void* userdata) {
-	for (TidyNode child = tidyGetChild(root); child; child = tidyGetNext(child)) {
-//		printf("Node name: %s\n", tidyNodeGetName(child));
-		for (CombinedSelector** sg_tmp = sg; *sg_tmp; ++sg_tmp) {
-//			String* s = CombinedSelector_string(*sg);
-//			printf("Selector: %s\n", s->str);
-//			string_free(s);
-			if (CombinedSelector_match(*sg, child)) {
-				cb(tdoc, child, userdata);
-				return;
-			}
-		}
-		findFirst(tdoc, child, sg, cb, userdata);
-	}
-}
-
-
 void SelectorGroup_free(SelectorGroup sg) {
 	for (CombinedSelector** sel_ptr = sg; *sel_ptr; ++sel_ptr) {
 			CombinedSelector_free(*sel_ptr);
 	}
 }
 
-
-// Finds all matching elements starting from @root node and applies @cb function.
-void findAll(TidyDoc tdoc, TidyNode root, SelectorGroup sg, callBackFunc cb, void* userdata) {
+// Returns first matching node.
+TidyNode findFirst(TidyDoc tdoc, TidyNode root, SelectorGroup sg) {
 	for (TidyNode child = tidyGetChild(root); child; child = tidyGetNext(child)) {
 //		printf("Node name: %s\n", tidyNodeGetName(child));
-		for (CombinedSelector** sg_tmp = sg; *sg_tmp; ++sg_tmp) {
+		for (CombinedSelector** sel_ptr = sg; *sel_ptr; ++sel_ptr) {
+			if (CombinedSelector_match(*sel_ptr, child)) {
+				return child;
+			}
+		}
+		if (findFirst(tdoc, child, sg)) {
+			return child;
+		}
+	}
+	return NULL;
+}
+
+/** Fills up given @nodes_array with all matching nodes.
+** Returns -1 if buffer was overflowed.
+**/
+int findAll(TidyDoc tdoc, TidyNode root, SelectorGroup sg, TidyNode* nodes_array, int array_size) {
+	for (TidyNode child = tidyGetChild(root); child; child = tidyGetNext(child)) {
+//		printf("Node name: %s\n", tidyNodeGetName(child));
+		for (CombinedSelector** sel_ptr = sg; *sel_ptr; ++sel_ptr) {
+			if (CombinedSelector_match(*sel_ptr, child)) {
+				nodes_array[0] = child;
+				printf("Node name: %s\n", tidyNodeGetName(nodes_array[0]));
+				++nodes_array;
+				--array_size;
+				if (array_size <= 0) {
+					return -1;
+				}
+			}
+		}
+		printf("Array size: %d\n", array_size);
+		int new_array_size = findAll(tdoc, child, sg, nodes_array, array_size);
+		if (new_array_size == -1) {
+			return -1;
+		}
+		// move array pointer to new position
+		nodes_array += array_size - new_array_size;
+		array_size = new_array_size;
+	}
+	return array_size;
+}
+
+// Finds first matching element starting from @root node and applies @cb function.
+bool findFirstWithCB(TidyDoc tdoc, TidyNode root, SelectorGroup sg, callBackFunc cb, void* userdata) {
+	for (TidyNode child = tidyGetChild(root); child; child = tidyGetNext(child)) {
+//		printf("Node name: %s\n", tidyNodeGetName(child));
+		for (CombinedSelector** sel_ptr = sg; *sel_ptr; ++sel_ptr) {
+			if (CombinedSelector_match(*sel_ptr, child)) {
+				cb(tdoc, child, userdata);
+				return true;
+			}
+		}
+		if (findFirstWithCB(tdoc, child, sg, cb, userdata)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+
+
+// Finds all matching elements starting from @root node and applies @cb function.
+void findAllWithCB(TidyDoc tdoc, TidyNode root, SelectorGroup sg, callBackFunc cb, void* userdata) {
+	for (TidyNode child = tidyGetChild(root); child; child = tidyGetNext(child)) {
+//		printf("Node name: %s\n", tidyNodeGetName(child));
+		for (CombinedSelector** sel_ptr = sg; *sel_ptr; ++sel_ptr) {
 //			String* s = CombinedSelector_string(*sg);
 //			printf("Selector: %s\n", s->str);
 //			string_free(s);
-			if (CombinedSelector_match(*sg, child)) {
+			if (CombinedSelector_match(*sel_ptr, child)) {
 				cb(tdoc, child, userdata);
 			}
 		}
-		findAll(tdoc, child, sg, cb, userdata);
+		findAllWithCB(tdoc, child, sg, cb, userdata);
 	}
 }
+

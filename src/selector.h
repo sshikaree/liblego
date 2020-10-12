@@ -143,11 +143,19 @@ void SelectorGroup_free(SelectorGroup sg);
 // Callback function prototype to use with findFirst() and findAll() functions.
 typedef void (*callBackFunc)(TidyDoc tdoc, TidyNode node, void* userdata);
 
+// Returns first matching node.
+TidyNode findFirst(TidyDoc tdoc, TidyNode root, SelectorGroup sg);
+
+/** Fills up given @nodes _array with all matching nodes.
+** Returns -1 if buffer was overflowed.
+**/
+int findAll(TidyDoc tdoc, TidyNode root, SelectorGroup sg, TidyNode* nodes_array, int array_size);
+
 // Finds first matching element starting from @root node and applies @cb function.
-void findFirst(TidyDoc tdoc, TidyNode root, SelectorGroup sg, callBackFunc cb, void* userdata);
+bool findFirstWithCB(TidyDoc tdoc, TidyNode root, SelectorGroup sg, callBackFunc cb, void* userdata);
 
 // Finds all matching elements starting from @root node and applies @cb function.
-void findAll(TidyDoc tdoc, TidyNode root, SelectorGroup sg, callBackFunc cb, void* userdata);
+void findAllWithCB(TidyDoc tdoc, TidyNode root, SelectorGroup sg, callBackFunc cb, void* userdata);
 
 
 

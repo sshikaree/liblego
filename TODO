@@ -5,16 +5,9 @@
 parser.c:
 --------
 	- Implement parseRegex
-	+ Implement parseTypeSelector
-	+ Implement parseIDSelector
-	+ Implement parseClassSelector
-	+ Implement parseAttributeSelector
 	- Implement parsePseudoClassSelector
 	- Implement parseInteger
 	- Implement parseNth
-	+ Implement parseSimpleSelectorSequence
-	+ Implement parseSelector
-	+ Implement parseSelectorGroup
 	
 	- Implement _string() methods:
 		-- SimpleSelector_string():
@@ -23,18 +16,15 @@ parser.c:
 selector.c:
 ----------
 	+ Implement SelectorGroup type
-		++ SelectorGroup_free()
 		-- Implement dynamic array or linked list??
 	- Implement matching functions:
-		-- 'SimpleSelectorType_ATTR' section in SimpleSelector_match()	
-			--- Implement the rest of the operators
-		++ CombinedSelector_match()
-		++ CompoundSelector_match()
-		-- Selector_match()
+		-- Implement the rest of the operators in the matchAttribute()
+		-- Selector_match() ??
 		
-	- Make public API use Selector?
+	- Should public API use Selector?
 
 	
 Issues:
 -------
-	- "*" selector test not passed
+	- "*" selector test does not pass.
+	- Tidy Problems with non valid HTML  e.g. '<ul><li class="t1"><li class="t2">'

@@ -3,12 +3,13 @@
 
 #include <stdbool.h>
 
-#include "util/dynamic_string.h"
 #include <tidy/tidy.h>
 
+#include "util/dynamic_string.h"
+
 #define SPEC_LEN			3	// Specifity array length
-#define MAX_SELECTORS_NUM	32	// Max SimpleSelectors array size in CompoundSelector. TODO: Should it be dynamic array??
-#define SELECTOR_GROUP_LEN	16	// Max SelectorGroup array size. TODO: Should it be dynamic array??
+#define MAX_SELECTORS_NUM	32	// Max SimpleSelectors array size in CompoundSelector. TODO: Should it be dynamic??
+#define SELECTOR_GROUP_LEN	32	// Max SelectorGroup array size. TODO: Should it be dynamic??
 
 // Specificity is the CSS specificity as defined in
 // https://www.w3.org/TR/selectors/#specificity-rules
@@ -105,7 +106,7 @@ typedef struct CombinedSelector {
 CombinedSelector*	CombinedSelector_new(void);
 void				CombinedSelector_free(CombinedSelector* comb_sel);
 void				CombinedSelector_specificity(CombinedSelector* comb_sel, Specificity spec);
-bool				CombinedSelector_match(CombinedSelector* comb_sel, TidyNode tnod);
+bool				CombinedSelector_match(CombinedSelector* comb_sel, TidyNode node);
 String*				CombinedSelector_string(CombinedSelector* comb_sel);
 
 
@@ -113,20 +114,19 @@ String*				CombinedSelector_string(CombinedSelector* comb_sel);
 // Selector
 // ********
 
-typedef struct Selector {
-    SelectorType  type;
-    union {
-		SimpleSelector		smpl_sel;
-//        AttrSelector*        asel;
-		CompoundSelector	comp_sel;
-		CombinedSelector	comb_sel;
-    };
-} Selector;
+//typedef struct Selector {
+//    SelectorType  type;
+//    union {
+//		SimpleSelector		smpl_sel;
+//		CompoundSelector	comp_sel;
+//		CombinedSelector	comb_sel;
+//    };
+//} Selector;
 
-Selector*	Selector_new(SelectorType sel_type, SimpleSelectorType smpl_sel_type);
-void		Selector_free(Selector* sel);
-void		Selector_specificity(Selector* sel, Specificity spec);
-bool		Selector_match(Selector* sel, TidyNode* tnod);
+//Selector*	Selector_new(SelectorType sel_type, SimpleSelectorType smpl_sel_type);
+//void		Selector_free(Selector* sel);
+//void		Selector_specificity(Selector* sel, Specificity spec);
+//bool		Selector_match(Selector* sel, TidyNode* tnod);
 
 
 
@@ -140,22 +140,7 @@ typedef CombinedSelector* SelectorGroup[SELECTOR_GROUP_LEN];
 void SelectorGroup_free(SelectorGroup sg);
 
 
-// Callback function prototype to use with findFirst() and findAll() functions.
-typedef void (*callBackFunc)(TidyDoc tdoc, TidyNode node, void* userdata);
 
-// Returns first matching node.
-TidyNode findFirst(TidyDoc tdoc, TidyNode root, SelectorGroup sg);
-
-/** Fills up given @nodes _array with all matching nodes.
-** Returns -1 if buffer was overflowed.
-**/
-int findAll(TidyDoc tdoc, TidyNode root, SelectorGroup sg, TidyNode* nodes_array, int array_size);
-
-// Finds first matching element starting from @root node and applies @cb function.
-bool findFirstWithCB(TidyDoc tdoc, TidyNode root, SelectorGroup sg, callBackFunc cb, void* userdata);
-
-// Finds all matching elements starting from @root node and applies @cb function.
-void findAllWithCB(TidyDoc tdoc, TidyNode root, SelectorGroup sg, callBackFunc cb, void* userdata);
 
 
 

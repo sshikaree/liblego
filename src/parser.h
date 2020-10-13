@@ -49,7 +49,7 @@ typedef struct Parser {
     char*           s;                              // source string
     size_t          s_len;                          // source string length
     char*           pos;                            // current position in the source string
-//    SelectorGroup  sel_group;						// array of found selectors. Do we need it??
+	SelectorGroup	sel_group;						// null-terminated array of found selectors. Do we need it??
 //    size_t		 sel_group_count;				// number of found selectors
 } Parser;
 
@@ -57,7 +57,7 @@ typedef struct Parser {
 const char* ParserError_toString(ParserError err);
 
 // Parser_init inits Parser with given source string.
-void Parser_init(Parser* p, char *source_string);
+//void Parser_init(Parser* p, char *source_string);
 
 // skipWhitespace consumes whitespace characters and comments.
 // It returns true if there was actually anything to skip.
@@ -92,10 +92,30 @@ ParserError parseQuoted(Parser* p, String* result);
 // *	Public API functions	*
 // ******************************
 
+// Callback function prototype to use with findFirst() and findAll() functions.
+typedef void (*callBackFunc)(TidyDoc tdoc, TidyNode node, void* userdata);
 
-// Parse_compile parses a selector, or a group of selectors separated by commas and
-// stores result into @sg
-ParserError Parser_compile(Parser* p, SelectorGroup sg);
+// Returns first matching node.
+TidyNode findFirst(TidyDoc tdoc, TidyNode root, Parser* p);
+
+/** Fills up given @nodes _array with all matching nodes.
+** Returns -1 if buffer was overflowed.
+**/
+int findAll(TidyDoc tdoc, TidyNode root, Parser* p, TidyNode* nodes_array, int array_size);
+
+// Finds first matching element starting from @root node and applies @cb function.
+bool findFirstWithCB(TidyDoc tdoc, TidyNode root, Parser* p, callBackFunc cb, void* userdata);
+
+// Finds all matching elements starting from @root node and applies @cb function.
+void findAllWithCB(TidyDoc tdoc, TidyNode root, Parser* p, callBackFunc cb, void* userdata);
+
+
+
+// Parses a selector, or a group of selectors separated by commas.
+ParserError Parser_compile(Parser* p, char* source_string);
+
+// Cleans up and frees Parser.
+void Parser_destroy(Parser* p);
 
 
 #endif    // PARSER_H

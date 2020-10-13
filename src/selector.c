@@ -1,4 +1,6 @@
 #include "../src/selector.h"
+#include "../src/parser.h"
+
 #include <tidy/tidy.h>
 //#include <tidy/tidybuffio.h>
 
@@ -498,86 +500,7 @@ String*	CombinedSelector_string(CombinedSelector* comb_sel) {
 void SelectorGroup_free(SelectorGroup sg) {
 	for (CombinedSelector** sel_ptr = sg; *sel_ptr; ++sel_ptr) {
 			CombinedSelector_free(*sel_ptr);
-	}
-}
-
-// Returns first matching node.
-TidyNode findFirst(TidyDoc tdoc, TidyNode root, SelectorGroup sg) {
-	for (TidyNode child = tidyGetChild(root); child; child = tidyGetNext(child)) {
-//		printf("Node name: %s\n", tidyNodeGetName(child));
-		for (CombinedSelector** sel_ptr = sg; *sel_ptr; ++sel_ptr) {
-			if (CombinedSelector_match(*sel_ptr, child)) {
-				return child;
-			}
-		}
-		if (findFirst(tdoc, child, sg)) {
-			return child;
-		}
-	}
-	return NULL;
-}
-
-/** Fills up given @nodes_array with all matching nodes.
-** Returns -1 if buffer was overflowed.
-**/
-int findAll(TidyDoc tdoc, TidyNode root, SelectorGroup sg, TidyNode* nodes_array, int array_size) {
-	for (TidyNode child = tidyGetChild(root); child; child = tidyGetNext(child)) {
-//		printf("Node name: %s\n", tidyNodeGetName(child));
-		for (CombinedSelector** sel_ptr = sg; *sel_ptr; ++sel_ptr) {
-			if (CombinedSelector_match(*sel_ptr, child)) {
-				nodes_array[0] = child;
-//				printf("Node name: %s\n", tidyNodeGetName(nodes_array[0]));
-				++nodes_array;
-				--array_size;
-				if (array_size <= 0) {
-					return -1;
-				}
-			}
-		}
-//		printf("Array size: %d\n", array_size);
-		int new_array_size = findAll(tdoc, child, sg, nodes_array, array_size);
-		if (new_array_size == -1) {
-			return -1;
-		}
-		// move array pointer to new position
-		nodes_array += array_size - new_array_size;
-		array_size = new_array_size;
-	}
-	return array_size;
-}
-
-// Finds first matching element starting from @root node and applies @cb function.
-bool findFirstWithCB(TidyDoc tdoc, TidyNode root, SelectorGroup sg, callBackFunc cb, void* userdata) {
-	for (TidyNode child = tidyGetChild(root); child; child = tidyGetNext(child)) {
-//		printf("Node name: %s\n", tidyNodeGetName(child));
-		for (CombinedSelector** sel_ptr = sg; *sel_ptr; ++sel_ptr) {
-			if (CombinedSelector_match(*sel_ptr, child)) {
-				cb(tdoc, child, userdata);
-				return true;
-			}
-		}
-		if (findFirstWithCB(tdoc, child, sg, cb, userdata)) {
-			return true;
-		}
-	}
-	return false;
-}
-
-
-
-// Finds all matching elements starting from @root node and applies @cb function.
-void findAllWithCB(TidyDoc tdoc, TidyNode root, SelectorGroup sg, callBackFunc cb, void* userdata) {
-	for (TidyNode child = tidyGetChild(root); child; child = tidyGetNext(child)) {
-//		printf("Node name: %s\n", tidyNodeGetName(child));
-		for (CombinedSelector** sel_ptr = sg; *sel_ptr; ++sel_ptr) {
-//			String* s = CombinedSelector_string(*sg);
-//			printf("Selector: %s\n", s->str);
-//			string_free(s);
-			if (CombinedSelector_match(*sel_ptr, child)) {
-				cb(tdoc, child, userdata);
-			}
-		}
-		findAllWithCB(tdoc, child, sg, cb, userdata);
+			*sel_ptr = NULL;
 	}
 }
 

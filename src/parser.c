@@ -31,10 +31,11 @@ const char* ParserError_toString(ParserError err) {
     }
 }
 
-void Parser_init(Parser* p, char* source_string) {
+static void Parser_init(Parser* p, char* source_string) {
     p->s = source_string;
     p->s_len = strlen(source_string);
     p->pos = source_string;
+	memset(p->sel_group, 0, SELECTOR_GROUP_LEN);
 }
 
 
@@ -535,18 +536,18 @@ static ParserError parseSelector(Parser* p, CombinedSelector* comb_sel) {
 }
 
 // parseSelectorGroup parses a group of selectors, separated by commas.
-static ParserError parseSelectorGroup(Parser *p, SelectorGroup sel_group, int group_size){
+static ParserError parseSelectorGroup(Parser *p/*, SelectorGroup sel_group, int group_size*/){
 	int i = 0;
-	memset(sel_group, 0, (size_t)group_size);
+	memset(p->sel_group, 0, (size_t)SELECTOR_GROUP_LEN);
 	CombinedSelector* comb_sel = CombinedSelector_new();
 	ParserError err = parseSelector(p, comb_sel);
 	if (err != ParserError_NO_ERROR) {
 		CombinedSelector_free(comb_sel);
 		return err;
 	}
-	sel_group[i] = comb_sel;
+	p->sel_group[i] = comb_sel;
 	i++;
-	if (i >= group_size) {
+	if (i >= SELECTOR_GROUP_LEN) {
 		return ParserError_SEL_BUF_OVERFLOW;
 	}
 
@@ -561,19 +562,115 @@ static ParserError parseSelectorGroup(Parser *p, SelectorGroup sel_group, int gr
 			CombinedSelector_free(comb_sel);
 			return err;
 		}
-		sel_group[i] = comb_sel;
+		p->sel_group[i] = comb_sel;
 		i++;
-		if (i >= group_size) {
+		if (i >= SELECTOR_GROUP_LEN) {
 			return ParserError_SEL_BUF_OVERFLOW;
 		}
     }
 	return ParserError_NO_ERROR;
 }
 
-// Parse_compile parses a selector, or a group of selectors separated by commas and
-// stores result into @sg
-ParserError Parser_compile(Parser* p, SelectorGroup sg) {
-	return parseSelectorGroup(p, sg, SELECTOR_GROUP_LEN);
+
+
+
+
+
+
+
+
+// Returns first matching node.
+TidyNode findFirst(TidyDoc tdoc, TidyNode root, Parser* p) {
+	for (TidyNode child = tidyGetChild(root); child; child = tidyGetNext(child)) {
+//		printf("Node name: %s\n", tidyNodeGetName(child));
+		for (CombinedSelector** sel_ptr = p->sel_group; *sel_ptr; ++sel_ptr) {
+			if (CombinedSelector_match(*sel_ptr, child)) {
+				return child;
+			}
+		}
+		if (findFirst(tdoc, child, p)) {
+			return child;
+		}
+	}
+	return NULL;
+}
+
+/** Fills up given @nodes_array with all matching nodes.
+** Returns -1 if buffer was overflowed.
+**/
+int findAll(TidyDoc tdoc, TidyNode root, Parser* p, TidyNode* nodes_array, int array_size) {
+	for (TidyNode child = tidyGetChild(root); child; child = tidyGetNext(child)) {
+//		printf("Node name: %s\n", tidyNodeGetName(child));
+		for (CombinedSelector** sel_ptr = p->sel_group; *sel_ptr; ++sel_ptr) {
+			if (CombinedSelector_match(*sel_ptr, child)) {
+				nodes_array[0] = child;
+//				printf("Node name: %s\n", tidyNodeGetName(nodes_array[0]));
+				++nodes_array;
+				--array_size;
+				if (array_size <= 0) {
+					return -1;
+				}
+			}
+		}
+//		printf("Array size: %d\n", array_size);
+		int new_array_size = findAll(tdoc, child, p, nodes_array, array_size);
+		if (new_array_size == -1) {
+			return -1;
+		}
+		// move array pointer to new position
+		nodes_array += array_size - new_array_size;
+		array_size = new_array_size;
+	}
+	return array_size;
+}
+
+// Finds first matching element starting from @root node and applies @cb function.
+bool findFirstWithCB(TidyDoc tdoc, TidyNode root, Parser* p, callBackFunc cb, void* userdata) {
+	for (TidyNode child = tidyGetChild(root); child; child = tidyGetNext(child)) {
+//		printf("Node name: %s\n", tidyNodeGetName(child));
+		for (CombinedSelector** sel_ptr = p->sel_group; *sel_ptr; ++sel_ptr) {
+			if (CombinedSelector_match(*sel_ptr, child)) {
+				cb(tdoc, child, userdata);
+				return true;
+			}
+		}
+		if (findFirstWithCB(tdoc, child, p, cb, userdata)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+
+
+// Finds all matching elements starting from @root node and applies @cb function.
+void findAllWithCB(TidyDoc tdoc, TidyNode root, Parser* p, callBackFunc cb, void* userdata) {
+	for (TidyNode child = tidyGetChild(root); child; child = tidyGetNext(child)) {
+//		printf("Node name: %s\n", tidyNodeGetName(child));
+		for (CombinedSelector** sel_ptr = p->sel_group; *sel_ptr; ++sel_ptr) {
+//			String* s = CombinedSelector_string(*sg);
+//			printf("Selector: %s\n", s->str);
+//			string_free(s);
+			if (CombinedSelector_match(*sel_ptr, child)) {
+				cb(tdoc, child, userdata);
+			}
+		}
+		findAllWithCB(tdoc, child, p, cb, userdata);
+	}
+}
+
+
+
+
+// Parses a selector, or a group of selectors separated by commas.
+ParserError Parser_compile(Parser* p, char* source_string) {
+	Parser_init(p, source_string);
+	return parseSelectorGroup(p);
+}
+
+// Cleans up and frees Parser.
+void Parser_destroy(Parser* p) {
+	SelectorGroup_free(p->sel_group);
 }
 
 

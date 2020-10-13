@@ -42,32 +42,32 @@ SimpleSelector* SimpleSelector_new(SimpleSelectorType type) {
     }
 	sel->pseudo_element = string_new(NULL);
 	if (!sel->pseudo_element) {
-		free(sel->val);
-        free(sel);
+		string_free(sel->val);
+		free(sel);
         return NULL;
     }
 	if (type == SimpleSelectorType_ATTR) {
 		sel->key = string_new(NULL);
 		if (!sel->key) {
-			free(sel->pseudo_element);
-			free(sel->val);
+			string_free(sel->pseudo_element);
+			string_free(sel->val);
 			free(sel);
 			return NULL;
 		}
 		sel->operation = string_new(NULL);
 		if (!sel->operation) {
-			free(sel->key);
-			free(sel->pseudo_element);
-			free(sel->val);
+			string_free(sel->key);
+			string_free(sel->pseudo_element);
+			string_free(sel->val);
 			free(sel);
 			return NULL;
 		}
 		sel->regexp = string_new(NULL);
 		if (!sel->regexp) {
-			free(sel->operation);
-			free(sel->key);
-			free(sel->pseudo_element);
-			free(sel->val);
+			string_free(sel->operation);
+			string_free(sel->key);
+			string_free(sel->pseudo_element);
+			string_free(sel->val);
 			free(sel);
 			return NULL;
 		}
@@ -98,7 +98,6 @@ void SimpleSelector_free(SimpleSelector* sel) {
 			string_free(sel->regexp);
 		}
 	}
-
 	free(sel);
 }
 

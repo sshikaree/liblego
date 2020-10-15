@@ -7,6 +7,7 @@
 #include <stdint.h>
 
 #include "util/dynamic_string.h"
+#include "util/slist.h"
 
 
 // ParserError_toString returns error string, corresponding to given error code.
@@ -25,6 +26,7 @@ const char* ParserError_toString(ParserError err) {
     case ParserError_WRONG_PSEUDOCLASS:         return "Wrong pseudoclass!";
     case ParserError_INVALID_ESCAPE_SEQUENCE:   return "Invalid escape sequence!";
     case ParserError_SEL_BUF_OVERFLOW:          return "Selectors buffer overflow!";
+	case ParserError_MEMORY_ERROR:				return "Memory allocation error!";
     // TODO: Fill up rest of error codes.
 
 	default: return  "Unknown error!";
@@ -536,7 +538,7 @@ static ParserError parseSelector(Parser* p, CombinedSelector* comb_sel) {
 }
 
 // parseSelectorGroup parses a group of selectors, separated by commas.
-static ParserError parseSelectorGroup(Parser *p/*, SelectorGroup sel_group, int group_size*/){
+static ParserError parseSelectorGroup(Parser *p){
 	int i = 0;
 	memset(p->sel_group, 0, (size_t)SELECTOR_GROUP_LEN);
 	CombinedSelector* comb_sel = CombinedSelector_new();
@@ -595,34 +597,62 @@ TidyNode findFirst(TidyDoc tdoc, TidyNode root, Parser* p) {
 	return NULL;
 }
 
-/** Fills up given @nodes_array with all matching nodes.
-** Returns -1 if buffer was overflowed.
+///** Fills up given array with all matching nodes.
+// *
+// * @param nodes_array - array to fill up.
+// * @return -1 if buffer was overflowed.
+//**/
+//int findAll(TidyDoc tdoc, TidyNode root, Parser* p, TidyNode* nodes_array, int array_size) {
+//	for (TidyNode child = tidyGetChild(root); child; child = tidyGetNext(child)) {
+////		printf("Node name: %s\n", tidyNodeGetName(child));
+//		for (CombinedSelector** sel_ptr = p->sel_group; *sel_ptr; ++sel_ptr) {
+//			if (CombinedSelector_match(*sel_ptr, child)) {
+//				nodes_array[0] = child;
+////				printf("Node name: %s\n", tidyNodeGetName(nodes_array[0]));
+//				++nodes_array;
+//				--array_size;
+//				if (array_size <= 0) {
+//					return -1;
+//				}
+//			}
+//		}
+////		printf("Array size: %d\n", array_size);
+//		int new_array_size = findAll(tdoc, child, p, nodes_array, array_size);
+//		if (new_array_size == -1) {
+//			return -1;
+//		}
+//		// move array pointer to new position
+//		nodes_array += array_size - new_array_size;
+//		array_size = new_array_size;
+//	}
+//	return array_size;
+//}
+
+
+/** Fills up given #NodeList with all matching nodes.
+ *
+ * @param nodes_array - array to fill up.
+ * @return -1 if buffer was overflowed.
 **/
-int findAll(TidyDoc tdoc, TidyNode root, Parser* p, TidyNode* nodes_array, int array_size) {
+ParserError findAll(TidyNode root, Parser* p, NodeList* lst) {
 	for (TidyNode child = tidyGetChild(root); child; child = tidyGetNext(child)) {
 //		printf("Node name: %s\n", tidyNodeGetName(child));
 		for (CombinedSelector** sel_ptr = p->sel_group; *sel_ptr; ++sel_ptr) {
 			if (CombinedSelector_match(*sel_ptr, child)) {
-				nodes_array[0] = child;
-//				printf("Node name: %s\n", tidyNodeGetName(nodes_array[0]));
-				++nodes_array;
-				--array_size;
-				if (array_size <= 0) {
-					return -1;
+				if (!NodeList_append(lst, child)) {
+					return ParserError_MEMORY_ERROR;
 				}
+//				printf("List size: %lu\n", lst->size);
 			}
 		}
-//		printf("Array size: %d\n", array_size);
-		int new_array_size = findAll(tdoc, child, p, nodes_array, array_size);
-		if (new_array_size == -1) {
-			return -1;
+		ParserError err = findAll(child, p, lst);
+		if (err != ParserError_NO_ERROR){
+			return err;
 		}
-		// move array pointer to new position
-		nodes_array += array_size - new_array_size;
-		array_size = new_array_size;
 	}
-	return array_size;
+	return ParserError_NO_ERROR;
 }
+
 
 // Finds first matching element starting from @root node and applies @cb function.
 bool findFirstWithCB(TidyDoc tdoc, TidyNode root, Parser* p, callBackFunc cb, void* userdata) {

@@ -21,6 +21,7 @@ typedef unsigned int uint;
 #include <tidy/tidy.h>
 
 #include "util/dynamic_string.h"
+#include "util/slist.h"
 #include "selector.h"
 
 typedef unsigned char byte;
@@ -38,6 +39,7 @@ typedef enum {
     ParserError_WRONG_PSEUDOCLASS,
     ParserError_INVALID_ESCAPE_SEQUENCE,
     ParserError_SEL_BUF_OVERFLOW,
+	ParserError_MEMORY_ERROR,
 
     ParserError_UNKNOWN_ERROR
 } ParserError;
@@ -98,10 +100,13 @@ typedef void (*callBackFunc)(TidyDoc tdoc, TidyNode node, void* userdata);
 // Returns first matching node.
 TidyNode findFirst(TidyDoc tdoc, TidyNode root, Parser* p);
 
-/** Fills up given @nodes _array with all matching nodes.
-** Returns -1 if buffer was overflowed.
+/** Fills up given array with all matching nodes.
+ * @param nodes_array - array to fill up.
+ * @return -1 if buffer was overflowed.
 **/
-int findAll(TidyDoc tdoc, TidyNode root, Parser* p, TidyNode* nodes_array, int array_size);
+//int findAll(TidyDoc tdoc, TidyNode root, Parser* p, TidyNode* nodes_array, int array_size);
+
+ParserError findAll( TidyNode root, Parser* p, NodeList* lst);
 
 // Finds first matching element starting from @root node and applies @cb function.
 bool findFirstWithCB(TidyDoc tdoc, TidyNode root, Parser* p, callBackFunc cb, void* userdata);

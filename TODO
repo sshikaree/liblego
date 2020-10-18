@@ -26,5 +26,5 @@ selector.c:
 	
 Issues:
 -------
-	- "*" selector test does not pass.
+	+ "*" selector test does not pass.
 	- Tidy Problems with non valid HTML  e.g. '<ul><li class="t1"><li class="t2">'

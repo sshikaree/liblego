@@ -1,5 +1,6 @@
 
 #include "parser.h"
+#include "lego.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -12,7 +13,7 @@
 
 // ParserError_toString returns error string, corresponding to given error code.
 // Do not try to free resulting string!
-const char* ParserError_toString(ParserError err) {
+const char* lego_ParserError_toString(lego_ParserError err) {
 //    static const char* str = "";
     switch (err) {
     case ParserError_UNEXPECTED_EOF:            return "Unexpected EOF!";
@@ -33,7 +34,7 @@ const char* ParserError_toString(ParserError err) {
     }
 }
 
-static void Parser_init(Parser* p, char* source_string) {
+static void Parser_init(lego_Parser* p, char* source_string) {
     p->s = source_string;
     p->s_len = strlen(source_string);
     p->pos = source_string;
@@ -100,7 +101,7 @@ static void toLowerASCII(char* s) {
 
 // skipWhitespace consumes whitespace characters and comments.
 // It returns true if there was actually anything to skip.
-bool skipWhitespace(Parser* p) {
+bool skipWhitespace(lego_Parser* p) {
     char* c_ptr = p->pos;
     for (; *c_ptr; ) {
         switch (*c_ptr) {
@@ -128,7 +129,7 @@ bool skipWhitespace(Parser* p) {
 
 // consumeParenthesis consumes an opening parenthesis and any following
 // whitespace. It returns true if there was actually a parenthesis to skip.
-static bool consumeParenthesis(Parser* p) {
+static bool consumeParenthesis(lego_Parser* p) {
     if (p->pos < p->s + p->s_len && *p->pos == '(') {
         p->pos++;
         skipWhitespace(p);
@@ -139,7 +140,7 @@ static bool consumeParenthesis(Parser* p) {
 
 // consumeClosingParenthesis consumes a closing parenthesis and any preceding
 // whitespace. It returns true if there was actually a parenthesis to skip.
-static bool consumeClosingParenthesis(Parser* p) {
+static bool consumeClosingParenthesis(lego_Parser* p) {
     char* c_ptr = p->pos;
     skipWhitespace(p);
     if (p->pos < p->s + p->s_len && *p->pos == ')') {
@@ -153,7 +154,7 @@ static bool consumeClosingParenthesis(Parser* p) {
 // parseEscape parses a backslash escape.
 // @buf must be at least 5 bytes long.
 // Returns null-terminated @buf.
-static ParserError parseEscape(Parser* p, char buf[5]) {
+static lego_ParserError parseEscape(lego_Parser* p, char buf[5]) {
     if ((p->pos > p->s + p->s_len - 2) || *p->pos != '\\') {
         return ParserError_INVALID_ESCAPE_SEQUENCE;
     }
@@ -197,14 +198,14 @@ static ParserError parseEscape(Parser* p, char buf[5]) {
 
 // parseName parses a name (which is like an identifier, but doesn't have
 // extra restrictions on the first character).
-static ParserError parseName(Parser* p, String* result) {
+static lego_ParserError parseName(lego_Parser* p, String* result) {
     for (; *p->pos; ) {
         if (nameChar((byte)*p->pos)) {
             string_append_c(result, *p->pos);
             p->pos++;
         } else if (*p->pos == '\\') {
             char buf[5];
-            ParserError err = parseEscape(p, buf);
+			lego_ParserError err = parseEscape(p, buf);
             if (err != ParserError_NO_ERROR) {
                 return err;
             }
@@ -223,7 +224,7 @@ static ParserError parseName(Parser* p, String* result) {
 
 // parseIdentifier parses an identifier
 // @result - where parsed selector pointer will be stored
-ParserError parseIdentifier(Parser *p, String* result) {
+lego_ParserError parseIdentifier(lego_Parser *p, String* result) {
     char* c_ptr = p->pos;
     if (*c_ptr == '-') {
         string_append_c(result, '-');
@@ -237,7 +238,7 @@ ParserError parseIdentifier(Parser *p, String* result) {
     }
     p->pos = c_ptr;
 
-    ParserError err = parseName(p, result);
+	lego_ParserError err = parseName(p, result);
     if (err != ParserError_NO_ERROR) {
         return err;
     }
@@ -247,7 +248,7 @@ ParserError parseIdentifier(Parser *p, String* result) {
 
 
 // parseQuoted parses a single- or double-quoted string.
-ParserError parseQuoted(Parser* p, String* result) {
+lego_ParserError parseQuoted(lego_Parser* p, String* result) {
     if (p->pos > p->s + p->s_len - 2) {
         return ParserError_UNEXPECTED_EOF;
     }
@@ -268,7 +269,7 @@ ParserError parseQuoted(Parser* p, String* result) {
 
             p->pos = c_ptr;
             char buf[5];
-            ParserError err = parseEscape(p, buf);
+			lego_ParserError err = parseEscape(p, buf);
             if (err != ParserError_NO_ERROR) {
                 return err;
             }
@@ -301,9 +302,9 @@ ParserError parseQuoted(Parser* p, String* result) {
 
 
 // parseTypeSelector parses a type selector (one that matches by tag name).
-static ParserError parseTypeSelector(Parser *p, SimpleSelector* tag_selector) {
+static lego_ParserError parseTypeSelector(lego_Parser *p, SimpleSelector* tag_selector) {
 	tag_selector->type = SimpleSelectorType_TAG;
-	ParserError err = parseIdentifier(p, tag_selector->val);
+	lego_ParserError err = parseIdentifier(p, tag_selector->val);
     if (err != ParserError_NO_ERROR) {
         return err;
     }
@@ -313,7 +314,7 @@ static ParserError parseTypeSelector(Parser *p, SimpleSelector* tag_selector) {
 }
 
 // parseIDSelector parses a selector that matches by id attribute.
-static ParserError parseIDSelector(Parser *p, SimpleSelector* id_selector) {
+static lego_ParserError parseIDSelector(lego_Parser *p, SimpleSelector* id_selector) {
     if (p->pos > p->s + p->s_len) {
         return ParserError_UNEXPECTED_EOF;
     }
@@ -326,7 +327,7 @@ static ParserError parseIDSelector(Parser *p, SimpleSelector* id_selector) {
 }
 
 // parseClassSelector parses a selector that matches by class attribute.
-static ParserError parseClassSelector(Parser *p, SimpleSelector* class_selector) {
+static lego_ParserError parseClassSelector(lego_Parser *p, SimpleSelector* class_selector) {
     if (p->pos > p->s + p->s_len) {
         return ParserError_UNEXPECTED_EOF;
     }
@@ -340,7 +341,7 @@ static ParserError parseClassSelector(Parser *p, SimpleSelector* class_selector)
 
 
 // parseAttributeSelector parses a selector that matches by attribute value.
-static ParserError parseAttributeSelector(Parser *p, SimpleSelector* attr_selector) {
+static lego_ParserError parseAttributeSelector(lego_Parser *p, SimpleSelector* attr_selector) {
     if (p->pos > p->s + p->s_len) {
         return ParserError_UNEXPECTED_EOF;
     }
@@ -350,7 +351,7 @@ static ParserError parseAttributeSelector(Parser *p, SimpleSelector* attr_select
     p->pos++;
     skipWhitespace(p);
 	attr_selector->type = SimpleSelectorType_ATTR;
-	ParserError err = parseIdentifier(p, attr_selector->key);
+	lego_ParserError err = parseIdentifier(p, attr_selector->key);
     if (err != ParserError_NO_ERROR) {
         return err;
     }
@@ -421,11 +422,11 @@ static ParserError parseAttributeSelector(Parser *p, SimpleSelector* attr_select
 
 // parseSimpleSelectorSequence parses a selector sequence that applies to
 // a single element.
-static ParserError parseSimpleSelectorSequence(Parser *p, CompoundSelector* csel) {
+static lego_ParserError parseSimpleSelectorSequence(lego_Parser *p, CompoundSelector* csel) {
     if (p->pos > p->s + p->s_len) {
         return ParserError_UNEXPECTED_EOF;
     }
-	ParserError err = ParserError_NO_ERROR;
+	lego_ParserError err = ParserError_NO_ERROR;
     switch (*p->pos) {
     case '*':
         // It's the universal selector. Just skip over it, since it doesn't affect the meaning.
@@ -495,10 +496,10 @@ loop_exit:
 
 // Should rename to parseCombinedSelector ??
 // parseSelector parses a selector that may include combinators.
-static ParserError parseSelector(Parser* p, CombinedSelector* comb_sel) {
+static lego_ParserError parseSelector(lego_Parser* p, CombinedSelector* comb_sel) {
     skipWhitespace(p);
 	CompoundSelector* first_sel = CompoundSelector_new();
-	ParserError err = parseSimpleSelectorSequence(p, first_sel);
+	lego_ParserError err = parseSimpleSelectorSequence(p, first_sel);
 	if (err != ParserError_NO_ERROR) {
 		CompoundSelector_free(first_sel);
 		return err;
@@ -527,7 +528,7 @@ static ParserError parseSelector(Parser* p, CombinedSelector* comb_sel) {
 			return ParserError_NO_ERROR;
 		}
 		CompoundSelector* second_sel = CompoundSelector_new();
-		ParserError err = parseSimpleSelectorSequence(p, second_sel);
+		lego_ParserError err = parseSimpleSelectorSequence(p, second_sel);
 		if (err != ParserError_NO_ERROR) {
 			CompoundSelector_free(first_sel);
 			CompoundSelector_free(second_sel);
@@ -538,11 +539,11 @@ static ParserError parseSelector(Parser* p, CombinedSelector* comb_sel) {
 }
 
 // parseSelectorGroup parses a group of selectors, separated by commas.
-static ParserError parseSelectorGroup(Parser *p){
+static lego_ParserError parseSelectorGroup(lego_Parser *p){
 	int i = 0;
 	memset(p->sel_group, 0, (size_t)SELECTOR_GROUP_LEN);
 	CombinedSelector* comb_sel = CombinedSelector_new();
-	ParserError err = parseSelector(p, comb_sel);
+	lego_ParserError err = parseSelector(p, comb_sel);
 	if (err != ParserError_NO_ERROR) {
 		CombinedSelector_free(comb_sel);
 		return err;
@@ -575,14 +576,8 @@ static ParserError parseSelectorGroup(Parser *p){
 
 
 
-
-
-
-
-
-
 // Returns first matching node.
-TidyNode findFirst(TidyDoc tdoc, TidyNode root, Parser* p) {
+TidyNode lego_FindFirst(TidyDoc tdoc, TidyNode root, lego_Parser* p) {
 	for (TidyNode child = tidyGetChild(root); child; child = tidyGetNext(child)) {
 //		printf("Node name: %s\n", tidyNodeGetName(child));
 		for (CombinedSelector** sel_ptr = p->sel_group; *sel_ptr; ++sel_ptr) {
@@ -590,51 +585,20 @@ TidyNode findFirst(TidyDoc tdoc, TidyNode root, Parser* p) {
 				return child;
 			}
 		}
-		if (findFirst(tdoc, child, p)) {
-			return child;
+		TidyNode ch = lego_FindFirst(tdoc, child, p);
+		if (ch) {
+			return ch;
 		}
 	}
 	return NULL;
 }
 
-///** Fills up given array with all matching nodes.
-// *
-// * @param nodes_array - array to fill up.
-// * @return -1 if buffer was overflowed.
-//**/
-//int findAll(TidyDoc tdoc, TidyNode root, Parser* p, TidyNode* nodes_array, int array_size) {
-//	for (TidyNode child = tidyGetChild(root); child; child = tidyGetNext(child)) {
-////		printf("Node name: %s\n", tidyNodeGetName(child));
-//		for (CombinedSelector** sel_ptr = p->sel_group; *sel_ptr; ++sel_ptr) {
-//			if (CombinedSelector_match(*sel_ptr, child)) {
-//				nodes_array[0] = child;
-////				printf("Node name: %s\n", tidyNodeGetName(nodes_array[0]));
-//				++nodes_array;
-//				--array_size;
-//				if (array_size <= 0) {
-//					return -1;
-//				}
-//			}
-//		}
-////		printf("Array size: %d\n", array_size);
-//		int new_array_size = findAll(tdoc, child, p, nodes_array, array_size);
-//		if (new_array_size == -1) {
-//			return -1;
-//		}
-//		// move array pointer to new position
-//		nodes_array += array_size - new_array_size;
-//		array_size = new_array_size;
-//	}
-//	return array_size;
-//}
-
 
 /** Fills up given #NodeList with all matching nodes.
  *
- * @param nodes_array - array to fill up.
- * @return -1 if buffer was overflowed.
+ * @param lst - list to fill up.
 **/
-ParserError findAll(TidyNode root, Parser* p, NodeList* lst) {
+lego_ParserError lego_FindAll(TidyNode root, lego_Parser* p, NodeList* lst) {
 	for (TidyNode child = tidyGetChild(root); child; child = tidyGetNext(child)) {
 //		printf("Node name: %s\n", tidyNodeGetName(child));
 		for (CombinedSelector** sel_ptr = p->sel_group; *sel_ptr; ++sel_ptr) {
@@ -645,7 +609,7 @@ ParserError findAll(TidyNode root, Parser* p, NodeList* lst) {
 //				printf("List size: %lu\n", lst->size);
 			}
 		}
-		ParserError err = findAll(child, p, lst);
+		lego_ParserError err = lego_FindAll(child, p, lst);
 		if (err != ParserError_NO_ERROR){
 			return err;
 		}
@@ -655,7 +619,7 @@ ParserError findAll(TidyNode root, Parser* p, NodeList* lst) {
 
 
 // Finds first matching element starting from @root node and applies @cb function.
-bool findFirstWithCB(TidyDoc tdoc, TidyNode root, Parser* p, callBackFunc cb, void* userdata) {
+bool lego_FindFirstWithCB(TidyDoc tdoc, TidyNode root, lego_Parser* p, lego_CallBackFunc cb, void* userdata) {
 	for (TidyNode child = tidyGetChild(root); child; child = tidyGetNext(child)) {
 //		printf("Node name: %s\n", tidyNodeGetName(child));
 		for (CombinedSelector** sel_ptr = p->sel_group; *sel_ptr; ++sel_ptr) {
@@ -664,7 +628,7 @@ bool findFirstWithCB(TidyDoc tdoc, TidyNode root, Parser* p, callBackFunc cb, vo
 				return true;
 			}
 		}
-		if (findFirstWithCB(tdoc, child, p, cb, userdata)) {
+		if (lego_FindFirstWithCB(tdoc, child, p, cb, userdata)) {
 			return true;
 		}
 	}
@@ -674,7 +638,7 @@ bool findFirstWithCB(TidyDoc tdoc, TidyNode root, Parser* p, callBackFunc cb, vo
 
 
 // Finds all matching elements starting from @root node and applies @cb function.
-void findAllWithCB(TidyDoc tdoc, TidyNode root, Parser* p, callBackFunc cb, void* userdata) {
+void lego_FindAllWithCB(TidyDoc tdoc, TidyNode root, lego_Parser* p, lego_CallBackFunc cb, void* userdata) {
 	for (TidyNode child = tidyGetChild(root); child; child = tidyGetNext(child)) {
 //		printf("Node name: %s\n", tidyNodeGetName(child));
 		for (CombinedSelector** sel_ptr = p->sel_group; *sel_ptr; ++sel_ptr) {
@@ -685,22 +649,33 @@ void findAllWithCB(TidyDoc tdoc, TidyNode root, Parser* p, callBackFunc cb, void
 				cb(tdoc, child, userdata);
 			}
 		}
-		findAllWithCB(tdoc, child, p, cb, userdata);
+		lego_FindAllWithCB(tdoc, child, p, cb, userdata);
 	}
 }
 
 
 
+// Creates new instance of lego_Parser.
+lego_Parser* lego_ParserNew(void) {
+	return (lego_Parser*)malloc(sizeof(lego_Parser));
+}
+
 
 // Parses a selector, or a group of selectors separated by commas.
-ParserError Parser_compile(Parser* p, char* source_string) {
+lego_ParserError lego_Compile(lego_Parser* p, char* source_string) {
 	Parser_init(p, source_string);
 	return parseSelectorGroup(p);
 }
 
-// Cleans up and frees Parser.
-void Parser_destroy(Parser* p) {
+// Cleans up parser
+void lego_Clean(lego_Parser* p) {
 	SelectorGroup_free(p->sel_group);
+}
+
+// Cleans up and frees Parser.
+void lego_Destroy(lego_Parser* p) {
+	lego_Clean(p);
+	free(p);
 }
 
 

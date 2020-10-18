@@ -1,4 +1,4 @@
-#include "../parser.h"
+#include "lego.h"
 #include "../selector.h"
 
 #include <stdio.h>
@@ -76,7 +76,7 @@ static void tree_traversal(TidyDoc tdoc, TidyNode root, SelectorGroup sel_group)
 
 
 int main() {
-	Parser p;
+	lego_Parser* p = lego_ParserNew();
 
 	SelectorGroup selector_group = {0};
 
@@ -93,7 +93,7 @@ int main() {
 	for (int i = 0; i < SAMPLES_NUM; ++i) {
 		printf("Selector sample string: '%s'\n", selector_samples[i]);
 		printf("HTML sample string: '%s'\n", html_samples[i]);
-		Parser_init(&p, selector_samples[i]);
+		lego_Compile(p, selector_samples[i]);
 		memset(selector_group, 0, SELECTOR_GROUP_LEN);
 
 		rc = tidyParseString(tdoc, html_samples[i]);
@@ -127,16 +127,16 @@ int main() {
 			continue;
 		}
 
-		ParserError err = Parser_compile(&p, selector_group);
-		if (err) {
-			fprintf(stderr, "%s\n", ParserError_toString(err));
-			continue;
-		}
+//		lego_ParserError err = lego_Compile(p, selector_group);
+//		if (err) {
+//			fprintf(stderr, "%s\n", lego_ParserError_toString(err));
+//			continue;
+//		}
 
 
 		// traversal here
 //		tree_traversal(tdoc, root, selector_group);
-		findAll(tdoc, root, selector_group, cb_printFunc, NULL);
+		lego_FindAllWithCB(tdoc, root, p, cb_printFunc, NULL);
 		puts("**********************************\n");
 
 

@@ -1,7 +1,9 @@
 #include <stdio.h>
 
 //#include "tokens_array.h"
-#include "../parser.h"
+#include "parser.h"
+#include "lego.h"
+#include "util/dynamic_string.h"
 
 #define SAMPLES_NUM 7
 
@@ -26,11 +28,11 @@ static char quotedTestSamples[2][64][128] = {
 };
 
 
-extern bool Parser_skipWhitespace(Parser* p);
+extern bool Parser_skipWhitespace(lego_Parser* p);
 
 int main() {
 
-    Parser p;
+	lego_Parser* p = lego_ParserNew();
 
     // parseIdentifier Tests
     puts("parseIdentifier Tests\n");
@@ -38,13 +40,13 @@ int main() {
         printf("Source string: '%s'\n", identifierTestSamples[0][i]);
         printf("Wanted: '%s'\n", identifierTestSamples[1][i]);
 
-        Parser_init(&p, identifierTestSamples[0][i]);
-		skipWhitespace(&p);
+		lego_Compile(p, identifierTestSamples[0][i]);
+//		skipWhitespace(&p);
 
         String* result = string_new(NULL);
-        ParserError err = parseIdentifier(&p, result);
+		lego_ParserError err = parseIdentifier(p, result);
         if (err != ParserError_NO_ERROR) {
-            fprintf(stderr, "%s\n", ParserError_toString(err));
+            fprintf(stderr, "%s\n", lego_ParserError_toString(err));
             result->str[0] = '\0';
         }
         printf("Result: '%s'\n", result->str);
@@ -62,13 +64,13 @@ int main() {
     for (int i = 0; i < 8; ++i) {
         printf("Source string: '%s'\n", quotedTestSamples[0][i]);
         printf("Wanted: '%s'\n", quotedTestSamples[1][i]);
-        Parser_init(&p, quotedTestSamples[0][i]);
-		skipWhitespace(&p);
+		lego_Compile(p, quotedTestSamples[0][i]);
+		skipWhitespace(p);
 
         String* result = string_new(NULL);
-        ParserError err = parseQuoted(&p, result);
+		lego_ParserError err = parseQuoted(p, result);
         if (err != ParserError_NO_ERROR) {
-            fprintf(stderr, "%s\n", ParserError_toString(err));
+            fprintf(stderr, "%s\n", lego_ParserError_toString(err));
             result->str[0] = '\0';
         }
         printf("Result: '%s'\n", result->str);
@@ -81,5 +83,7 @@ int main() {
         printf("***********************************\n");
     }
 	
+
+	lego_Destroy(p);
 	return 0;
 }

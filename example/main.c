@@ -11,7 +11,7 @@ typedef unsigned long ulong;
 #include "lego.h"
 #include "util/slist.h"
 
-
+// Callback function
 static void cb_printFunc(TidyDoc tdoc, TidyNode node, void* userdata) {
 	TidyBuffer buf = {0};
 	tidyNodeGetText(tdoc, node, &buf);

@@ -12,60 +12,19 @@ typedef unsigned long ulong;
 #include "util/slist.h"
 
 
-static char* readFile(const char* filename) {
-	FILE* fp = fopen(filename, "r");
-	if (!fp) {
-		perror("Error opening file");
-		return NULL;
-	}
-	fseek(fp, 0L, SEEK_END);
-	long int file_size = ftell(fp);
-	if (file_size < 1) {
-		fprintf(stderr, "Empty file.\n");
-		fclose(fp);
-		return NULL;
-	}
-	rewind(fp);
-	char* buffer = (char*)malloc(sizeof(char) * (size_t)file_size + 1);
-	if (!buffer) {
-		perror("Memory allocation error");
-		fclose(fp);
-		exit(EXIT_FAILURE);
-	}
-
-	size_t bytes_num = fread(buffer, sizeof(char), (size_t)file_size, fp);
-	if ((bytes_num < 1) || ferror(fp)){
-		perror("Error reading file");
-		free(buffer);
-		fclose(fp);
-		return NULL;	
-	}
-	fclose(fp);
-	buffer[bytes_num] = '\0';
-	return buffer;
-}
-
 static void cb_printFunc(TidyDoc tdoc, TidyNode node, void* userdata) {
 	TidyBuffer buf = {0};
 	tidyNodeGetText(tdoc, node, &buf);
 	// Get rid of trailing '\n'-s
 	for (; buf.size-1 > 0 && buf.bp[buf.size-1] == '\n'; --buf.size, buf.bp[buf.size] = '\0');
-//	String* s = CombinedSelector_string(*sel_ptr);
 	printf("Matched node: '%s'\n",
 		   buf.bp
 		   );
 	tidyBufFree(&buf);
-//	string_free(s);
 }
 
 int main() {
 	#define FILE_NAME "wikipedia.html"
-
-	char* content = readFile(FILE_NAME);
-	if (content == NULL) {
-		fprintf(stderr, "Error reading file %s\n", FILE_NAME);
-		exit(EXIT_FAILURE);
-	}
 	
 	TidyBuffer output = {0};
 	TidyBuffer errbuf = {0};
@@ -73,7 +32,7 @@ int main() {
 	TidyDoc tdoc = tidyCreate();
 	tidySetErrorBuffer(tdoc, &errbuf);
 
-	rc = tidyParseString(tdoc, content);
+	rc  = tidyParseFile(tdoc, FILE_NAME);
 	if (rc >= 0) {
 		rc = tidyCleanAndRepair(tdoc);
 	}
@@ -88,7 +47,7 @@ int main() {
 	}
 	if (rc < 0) {
 		fprintf(stderr,
-				"libtide error [%d] parsing string '%s'\n", rc, content
+				"libtide error [%d] parsing file '%s'\n", rc, FILE_NAME
 		);
 	}
 
@@ -116,7 +75,6 @@ int main() {
 		puts("Match not found. Exiting.");
 		goto exit;
 	}
-	printf("News block name: %s\n", tidyNodeGetName(news_block));
 	// Clean up Parser for reuse.
 	lego_Clean(p);
 
@@ -144,8 +102,6 @@ int main() {
 
 
 exit:
-
-	free(content);
 
 	tidyBufFree(&output);
 	tidyBufFree(&errbuf);
